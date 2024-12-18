@@ -1,9 +1,9 @@
 import Fastify from "fastify";
 import * as dotenv from "dotenv";
 import multipart from "@fastify/multipart";
+import { handleRPCRequest } from "./handlers";
 import { uploadHandler } from "./uploadHandler";
 import { connectToDB } from "./db";
-import { handleRPCRequest } from "./handlers";
 
 dotenv.config();
 const HOST = process.env.HOST || "localhost";
@@ -25,7 +25,7 @@ const startServer = async () => {
       return reply.send(result);
     });
 
-    fastify.post("/image", uploadHandler);
+    fastify.post("/images", uploadHandler);
 
     await fastify.listen({ host: HOST, port: PORT });
     console.log(`Server running on http://${HOST}:${PORT}`);
