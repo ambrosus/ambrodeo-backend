@@ -1,0 +1,30 @@
+{
+  "name": "ambrodeo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node src/server.ts",
+    "dev": "nodemon src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@fastify/multipart": "^9.0.1",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.4",
+    "fastify": "^5.2.0",
+    "fastify-plugin": "^5.0.1",
+    "jsonrpc-lite": "^2.2.0",
+    "mongodb": "^6.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
