@@ -1,11 +1,23 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import fs from "fs";
 import path from "path";
+import { validateSignature } from "./handlers";
 
 export const uploadHandler = async (
   request: FastifyRequest,
   reply: FastifyReply,
 ) => {
+  let address = request.headers["authorization-address"];
+  let signature = request.headers["authorization-secret"];
+
+  address = String(Array.isArray(address) ? "0x" : address);
+  signature = String(Array.isArray(signature) ? "" : signature);
+
+  if (!validateSignature(address, signature)) {
+    reply.code(401).send({ error: "Authorization Required" });
+    return;
+  }
+
   const data = await request.file();
   if (!data) {
     reply.code(400).send({ error: "No image uploaded" });
