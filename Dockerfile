@@ -2,11 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY ./package.json /app
-COPY ./yarn.lock /app
+COPY package*.json ./
 
-RUN yarn install && yarn cache clean
+RUN npm install
+COPY . .
 
-COPY . ./
-
-CMD ["yarn", "start:build"]
+CMD ["npm", "start:build"]
