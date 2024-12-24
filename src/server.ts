@@ -43,8 +43,8 @@ const startServer = async () => {
 
     fastify.post("/images", uploadHandler);
 
-    await fastify.listen({ host: HOST, port: PORT });
-    console.log(`Server running on http://${HOST}:${PORT}`);
+    await fastify.listen({host: "0.0.0.0", port: PORT });
+    console.log(`Server running on http://${host}:${PORT}`);
   } catch (error) {
     fastify.log.error(error);
     process.exit(1);
