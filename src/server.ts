@@ -1,15 +1,9 @@
 import Fastify from "fastify";
-import * as dotenv from "dotenv";
 import multipart from "@fastify/multipart";
 import { handleRPCRequest } from "./handlers";
 import { uploadHandler } from "./uploadHandler";
 import { connectToDB } from "./db";
-
-dotenv.config();
-const HOST = process.env.HOST || "localhost";
-const PORT = Number(process.env.PORT || 3000);
-const DATABASE_URL = process.env.DATABASE_URL || "mongodb://localhost:27017";
-const DATABASE = process.env.DATABASE || "ambrodeo";
+import { HOST, PORT, DATABASE_URL, DATABASE } from "./env";
 const fastify = Fastify({
   bodyLimit: 5000000,
   logger: true,

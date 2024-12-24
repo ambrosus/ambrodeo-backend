@@ -4,6 +4,7 @@ import * as dotenv from "dotenv";
 import axios from "axios";
 import { ethers, recoverAddress } from "ethers";
 import crypto from "crypto";
+import { SUBGRAPHS_ENDPOINT } from "./env";
 
 const query = `
   query GetToken($tokenAddress: ID!) {
@@ -27,7 +28,6 @@ interface RPCParams {
   skip?: number;
 }
 
-const SUBGRAPHS_ENDPOINT = process.env.SUBGRAPHS_ENDPOINT || "";
 const mapSecret = new Map();
 
 async function addToken(tokenAddress: string): Promise<boolean> {
@@ -124,12 +124,15 @@ const getSecret = async ({ address }: RPCParams) => {
   if (!address || !ethers.isAddress(address))
     throw jsonrpc.JsonRpcError.invalidParams("Invalid address");
 
-  const secret = crypto
-    .createHash("sha256")
-    .update(crypto.getRandomValues(new Uint8Array(32)))
-    .digest("hex");
+  const secret = "AMBRodeo authorization secret: ";
+  secret.concat(
+    crypto
+      .createHash("sha256")
+      .update(crypto.getRandomValues(new Uint8Array(32)))
+      .digest("hex"),
+  );
 
-  mapSecret.set("address", secret);
+  mapSecret.set(address, secret);
   return { address: address, secret: secret };
 };
 

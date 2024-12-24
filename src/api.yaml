@@ -1,0 +1,172 @@
+openapi: 3.0.0
+info:
+  title: JSON-RPC API
+  description: API for handling tokens, messages, likes, users, and signatures.
+  version: 1.0.0
+paths:
+  /:
+    post:
+      summary: Handles JSON-RPC requests
+      description: Processes various JSON-RPC requests like addUser, addMessage, addLike, etc.
+      operationId: handleRPCRequest
+      requestBody:
+        description: JSON-RPC request payload
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                jsonrpc:
+                  type: string
+                  example: "2.0"
+                method:
+                  type: string
+                  description: The method being invoked.
+                  enum:
+                    - getSecret
+                    - addUser
+                    - addMessage
+                    - addLike
+                    - getToken
+                    - getMessages
+                    - getUserLikes
+                    - getUser
+                params:
+                  type: object
+                  description: Parameters specific to the method being called.
+                id:
+                  type: integer
+                  description: Request identifier.
+      responses:
+        "200":
+          description: JSON-RPC response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jsonrpc:
+                    type: string
+                    example: "2.0"
+                  id:
+                    type: integer
+                    example: 1
+                  result:
+                    type: object
+                    description: The result of the method execution.
+                  error:
+                    type: object
+                    description: An error object if the method failed.
+        "400":
+          description: Invalid Request (Bad JSON-RPC format)
+        "500":
+          description: Internal Server Error
+    description: Handles all available JSON-RPC methods.
+
+components:
+  schemas:
+    RPCParams:
+      type: object
+      properties:
+        address:
+          type: string
+          description: The address of the user.
+        signature:
+          type: string
+          description: Optional signature for validation.
+        userName:
+          type: string
+          description: The username of the user.
+        tokenAddress:
+          type: string
+          description: Address of the token.
+        image:
+          type: string
+          description: User profile image.
+        message:
+          type: string
+          description: Message content.
+        like:
+          type: boolean
+          description: Whether the user likes a particular token.
+        limit:
+          type: integer
+          description: Limit for paginated requests.
+        skip:
+          type: integer
+          description: Offset for paginated requests.
+
+    RPCResponse:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          description: The JSON-RPC version.
+        id:
+          type: integer
+          description: The request ID.
+        result:
+          type: object
+          description: The result of the method invoked.
+        error:
+          type: object
+          description: Error details if the method invocation failed.
+
+    Token:
+      type: object
+      properties:
+        tokenAddress:
+          type: string
+          description: Address of the token.
+        like:
+          type: integer
+          description: Number of likes for the token.
+
+    User:
+      type: object
+      properties:
+        address:
+          type: string
+          description: User's wallet address.
+        userName:
+          type: string
+          description: User's name.
+        image:
+          type: string
+          description: User's profile image URL.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the user was added.
+
+    Message:
+      type: object
+      properties:
+        address:
+          type: string
+          description: The address of the user sending the message.
+        tokenAddress:
+          type: string
+          description: The token address related to the message.
+        message:
+          type: string
+          description: The message content.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was sent.
+
+    Like:
+      type: object
+      properties:
+        address:
+          type: string
+          description: The address of the user who liked the token.
+        tokenAddress:
+          type: string
+          description: The token address that was liked.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the like was added.
