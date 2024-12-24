@@ -16,7 +16,7 @@ const fastify = Fastify({
 });
 
 const openApiSpec = yaml.load(
-  fs.readFileSync(path.join(__dirname, "api.yaml"), "utf8"),
+  fs.readFileSync(path.join(__dirname, "openapi.yaml"), "utf8"),
 ) as OpenAPIV3.Document;
 
 fastify.register(swagger, {

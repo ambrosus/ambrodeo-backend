@@ -1,9 +1,78 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: JSON-RPC API
   description: API for handling tokens, messages, likes, users, and signatures.
   version: 1.0.0
 paths:
+  /images:
+    post:
+      summary: Upload an image
+      description: >
+        Upload an image file to the server. Requires authorization headers
+        (`authorization-address` and `authorization-secret`) and a valid image file.
+      parameters:
+        - name: authorization-address
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Ethereum address used for authorization.
+        - name: authorization-secret
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Signature secret for authorization.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The image file to upload.
+              required:
+                - file
+      responses:
+        "200":
+          description: Successful upload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Image uploaded"
+                  filename:
+                    type: string
+                    example: "uploaded-image.jpg"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "No image uploaded"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Authorization Required"
   /:
     post:
       summary: Handles JSON-RPC requests
