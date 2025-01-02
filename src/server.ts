@@ -4,6 +4,7 @@ import mongodb from "@fastify/mongodb";
 import axios from "axios";
 import crypto from "crypto";
 import ethers from "ethers";
+import { isAddress } from "ethers";
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
@@ -142,7 +143,7 @@ async function addMessage(request: FastifyRequest, reply: FastifyReply) {
     };
 
     tokenAddress = tokenAddress.toLowerCase();
-    if (!ethers.isAddress(tokenAddress)) throw new Error("Invalid address");
+    if (!isAddress(tokenAddress)) throw new Error("Invalid address");
 
     if (!checkTokenExist(request, tokenAddress))
       return reply.status(404).send({ token: "Token not found" });
@@ -207,7 +208,7 @@ async function addOrDeleteLike(request: FastifyRequest, reply: FastifyReply) {
     };
 
     tokenAddress = tokenAddress.toLowerCase();
-    if (!ethers.isAddress(tokenAddress)) throw new Error("Invalid address");
+    if (!isAddress(tokenAddress)) throw new Error("Invalid address");
 
     if (!checkTokenExist(request, tokenAddress))
       return reply.status(404).send({ token: "Token not found" });
@@ -319,10 +320,10 @@ async function getSecret(request: FastifyRequest, reply: FastifyReply) {
   try {
     let { address } = request.headers as { address?: string };
     address = address.toLowerCase();
-    if (!ethers.isAddress(address)) throw new Error("Invalid address");
+    if (!isAddress(address)) throw new Error("Invalid address");
 
-    const secret = "AMBRodeo authorization secret: ";
-    secret.concat(
+    let secret = "AMBRodeo authorization secret: ";
+    secret = secret.concat(
       crypto
         .createHash("sha256")
         .update(crypto.getRandomValues(new Uint8Array(32)))
