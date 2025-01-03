@@ -40,7 +40,7 @@ paths:
             application/json:
               schema:
                 type: object
-  /upload:
+  /api/upload:
     post:
       summary: Upload a file
       parameters:
@@ -65,9 +65,7 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  message:
-                    type: string
-                  filename:
+                  cid:
                     type: string
         "400":
           description: No file uploaded

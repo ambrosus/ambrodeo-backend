@@ -13,9 +13,19 @@ import { OpenAPIV3 } from "openapi-types";
 import { getEnv, initFastify } from "./init";
 import { docs } from "./documentation";
 import cors from "@fastify/cors";
+import FormData from "form-data";
 
 const query = `query GetToken($tokenAddress: ID!) {token(id: $tokenAddress) {id}}`;
-const { HOST, PORT, DATABASE_URL, SUBGRAPHS_ENDPOINT, UPLOAD_DIR } = getEnv();
+const {
+  HOST,
+  PORT,
+  DATABASE_URL,
+  SUBGRAPHS_ENDPOINT,
+  UPLOAD_DIR,
+  PINATA_API_KEY,
+  PINATA_SECRET_API_KEY,
+  PINATA_ENDPOINT,
+} = getEnv();
 const fastify = initFastify();
 const mapSecret = new Map();
 
@@ -74,7 +84,7 @@ const startServer = async () => {
     });
 
     fastify.get("/", index);
-    fastify.post("/upload", uploadFile);
+    fastify.post("/api/upload", uploadFile);
     fastify.post("/api/user", addOrUpdateUser);
     fastify.post("/api/message", addMessage);
     fastify.post("/api/like", addOrDeleteLike);
@@ -141,12 +151,13 @@ async function addMessage(request: FastifyRequest, reply: FastifyReply) {
       return reply.status(400).send({ error: "Invalid JSON payload" });
     }
 
-    const { address } = request.headers as { address?: string };
+    let { address } = request.headers as { address?: string };
     let { tokenAddress, message } = data as {
       tokenAddress: string;
       message: string;
     };
 
+    address = address.toLowerCase();
     tokenAddress = tokenAddress.toLowerCase();
     if (!ethers.isAddress(tokenAddress)) throw new Error("Invalid address");
 
@@ -173,11 +184,12 @@ async function addOrUpdateUser(request: FastifyRequest, reply: FastifyReply) {
       return reply.status(400).send({ error: "Invalid JSON payload" });
     }
 
-    const { address } = request.headers as { address?: string };
+    let { address } = request.headers as { address?: string };
     const { userName, image } = data as {
       userName: string;
       image: string;
     };
+    address = address.toLowerCase();
 
     await request.server.mongo.db?.collection("user").updateOne(
       { address },
@@ -206,12 +218,13 @@ async function addOrDeleteLike(request: FastifyRequest, reply: FastifyReply) {
       return reply.status(400).send({ error: "Invalid JSON payload" });
     }
 
-    const { address } = request.headers as { address?: string };
+    let { address } = request.headers as { address?: string };
     let { tokenAddress, like } = data as {
       tokenAddress: string;
       like: boolean;
     };
 
+    address = address.toLowerCase();
     tokenAddress = tokenAddress.toLowerCase();
     if (!ethers.isAddress(tokenAddress)) throw new Error("Invalid address");
 
@@ -253,7 +266,8 @@ async function addOrDeleteLike(request: FastifyRequest, reply: FastifyReply) {
 
 async function getUser(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const { address } = request.headers as { address?: string };
+    let { address } = request.headers as { address?: string };
+    address = address.toLowerCase();
     const user = await request.server.mongo.db
       ?.collection("user")
       .findOne({ address }, { projection: { _id: 0 } });
@@ -266,11 +280,12 @@ async function getUser(request: FastifyRequest, reply: FastifyReply) {
 
 async function getMessages(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const { tokenAddress, skip, limit } = request.query as {
+    let { tokenAddress, skip, limit } = request.query as {
       tokenAddress?: string;
       skip?: number;
       limit?: number;
     };
+    tokenAddress = tokenAddress.toLowerCase();
     const messages = await request.server.mongo.db
       ?.collection("message")
       .find({ tokenAddress }, { projection: { _id: 0 } })
@@ -287,9 +302,10 @@ async function getMessages(request: FastifyRequest, reply: FastifyReply) {
 
 async function getToken(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const { tokenAddress } = request.query as {
+    let { tokenAddress } = request.query as {
       tokenAddress?: string;
     };
+    tokenAddress = tokenAddress.toLowerCase();
     const token = await request.server.mongo.db
       ?.collection("token")
       .findOne({ tokenAddress }, { projection: { _id: 0 } });
@@ -359,22 +375,27 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
     }
 
     const filePath = path.join(uploadDir, data.filename);
-    await new Promise<void>((resolve, reject) => {
-      const writeStream = fs.createWriteStream(filePath);
-      data.file.pipe(writeStream);
+    const writeStream = fs.createWriteStream(filePath);
+    data.file.pipe(writeStream);
 
-      writeStream.on("finish", resolve);
-      writeStream.on("error", reject);
+    const formData = new FormData();
+    formData.append(data.filename, fs.createReadStream(filePath));
+    const response = await axios.post(PINATA_ENDPOINT, formData, {
+      headers: {
+        ...formData.getHeaders(),
+        pinata_api_key: PINATA_API_KEY,
+        pinata_secret_api_key: PINATA_SECRET_API_KEY,
+      },
     });
+    fs.rmSync(uploadDir, { recursive: true, force: true });
 
     reply.send({
       success: true,
-      message: "File uploaded",
-      filename: data.filename,
+      cid: response.data.IpfsHash,
     });
   } catch (error) {
     request.log.error(error);
-    return reply.status(500).send({ error: error.message });
+    return reply.status(500).send({ error: "Internal server error" });
   }
 }
 
