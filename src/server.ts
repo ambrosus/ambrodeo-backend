@@ -51,10 +51,11 @@ const startServer = async () => {
       }
 
       try {
-        const { address, signature } = request.headers as {
+        let { address, signature } = request.headers as {
           address?: string;
           signature?: string;
         };
+        address = address.toLowerCase();
         const secret = mapSecret.get(address);
 
         if (!signature || !address || !secret) {
