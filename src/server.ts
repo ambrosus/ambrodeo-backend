@@ -12,6 +12,7 @@ import swaggerUi from "@fastify/swagger-ui";
 import { OpenAPIV3 } from "openapi-types";
 import { getEnv, initFastify } from "./init";
 import { docs } from "./documentation";
+import cors from "@fastify/cors";
 
 const query = `query GetToken($tokenAddress: ID!) {token(id: $tokenAddress) {id}}`;
 const { HOST, PORT, DATABASE_URL, SUBGRAPHS_ENDPOINT, UPLOAD_DIR } = getEnv();
@@ -21,6 +22,10 @@ const mapSecret = new Map();
 const startServer = async () => {
   try {
     const openApiSpec = yaml.load(docs) as OpenAPIV3.Document;
+
+    fastify.register(cors, {
+      origin: "*",
+    });
 
     fastify.register(swagger, {
       openapi: openApiSpec,
