@@ -378,8 +378,10 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
     const writeStream = fs.createWriteStream(filePath);
     data.file.pipe(writeStream);
 
+    const fileStream = fs.createReadStream(filePath);
     const formData = new FormData();
-    formData.append(data.filename, fs.createReadStream(filePath));
+    formData.append("file", fileStream, path.basename(filePath));
+
     const response = await axios.post(PINATA_ENDPOINT, formData, {
       headers: {
         ...formData.getHeaders(),
