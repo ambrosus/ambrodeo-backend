@@ -4,8 +4,6 @@ import mongodb from "@fastify/mongodb";
 import axios from "axios";
 import crypto from "crypto";
 import { ethers } from "ethers";
-import fs from "fs";
-import path from "path";
 import yaml from "js-yaml";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
@@ -13,7 +11,8 @@ import { OpenAPIV3 } from "openapi-types";
 import { getEnv, initFastify } from "./init";
 import { docs } from "./documentation";
 import cors from "@fastify/cors";
-import FormData from "form-data";
+import { PinataSDK } from "pinata-web3";
+import { Blob } from "buffer";
 
 const query = `query GetToken($tokenAddress: ID!) {token(id: $tokenAddress) {id}}`;
 const {
@@ -21,13 +20,15 @@ const {
   PORT,
   DATABASE_URL,
   SUBGRAPHS_ENDPOINT,
-  UPLOAD_DIR,
-  PINATA_API_KEY,
-  PINATA_SECRET_API_KEY,
-  PINATA_ENDPOINT,
+  PINATA_JWT,
+  PINATA_GATEWAY,
 } = getEnv();
 const fastify = initFastify();
 const mapSecret = new Map();
+const pinata = new PinataSDK({
+  pinataJwt: PINATA_JWT,
+  pinataGateway: PINATA_GATEWAY,
+});
 
 const startServer = async () => {
   try {
@@ -369,35 +370,21 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
       return;
     }
 
-    const uploadDir = path.join(UPLOAD_DIR, "files", address);
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const filePath = path.join(uploadDir, data.filename);
-    const writeStream = fs.createWriteStream(filePath);
-    data.file.pipe(writeStream);
-
-    const fileStream = fs.createReadStream(filePath);
-    const formData = new FormData();
-    formData.append("file", fileStream, path.basename(filePath));
-
-    const response = await axios.post(PINATA_ENDPOINT, formData, {
-      headers: {
-        ...formData.getHeaders(),
-        pinata_api_key: PINATA_API_KEY,
-        pinata_secret_api_key: PINATA_SECRET_API_KEY,
-      },
+    const fileBuffer = await data.toBuffer();
+    const blob = new Blob([fileBuffer.buffer]);
+    const file = new File([blob], data.filename, {
+      type: data.mimetype,
     });
-    fs.rmSync(uploadDir, { recursive: true, force: true });
 
+    const upload = await pinata.upload.file(file);
+    console.log;
     reply.send({
       success: true,
-      cid: response.data.IpfsHash,
+      cid: upload.IpfsHash,
     });
   } catch (error) {
     request.log.error(error);
-    return reply.status(500).send({ error: "Internal server error" });
+    return reply.status(500).send({ error: error.message });
   }
 }
 
