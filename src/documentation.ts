@@ -177,6 +177,55 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/follow:
+    post:
+      summary: Add or remove a follower
+      description: Add a new follower or remove an existing one based on the request body.
+      parameters:
+      - $ref: '#/components/parameters/GlobalSignatureHeader'
+      - $ref: '#/components/parameters/GlobalAddressHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userAddress
+                - add
+              properties:
+                userAddress:
+                  type: string
+                  description: The address of the user to follow or unfollow.
+                add:
+                  type: boolean
+                  description: Set to 'true' to follow or 'false' to unfollow the user.
+      responses:
+        "200":
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+        "400":
+          description: Invalid JSON payload or invalid/missing fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   /api/like:
     post:
       summary: Add or remove a like for a token
@@ -252,6 +301,51 @@ paths:
                     timestamp:
                       type: string
                       format: date-time
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/followers:
+    get:
+      summary: Get followers
+      description: Retrieve the list of followers for a specific user.
+      parameters:
+        - name: userAddress
+          in: query
+          required: true
+          description: The address of the user whose followers are being retrieved.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully retrieved the list of followers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    address:
+                      type: string
+                      description: The address of the follower.
+                    userAddress:
+                      type: string
+                      description: The address of the user being followed.
+        "400":
+          description: Invalid query parameter or missing required field.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         "500":
           description: Server error
           content:

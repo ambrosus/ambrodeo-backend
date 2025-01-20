@@ -89,11 +89,13 @@ const startServer = async () => {
     fastify.post("/api/user", addOrUpdateUser);
     fastify.post("/api/message", addMessage);
     fastify.post("/api/like", addOrDeleteLike);
+    fastify.post("/api/follow", addfollow);
     fastify.get("/api/user", getUser);
     fastify.get("/api/messages", getMessages);
     fastify.get("/api/token", getToken);
     fastify.get("/api/likes", getUserLikes);
     fastify.get("/api/secret", getSecret);
+    fastify.get("/api/followers", getFollowers);
 
     await fastify.listen({ host: HOST, port: PORT });
     console.log(`Server running on http://${HOST}:${PORT}`);
@@ -388,4 +390,56 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
   }
 }
 
+async function addfollow(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    const data = request.body;
+    if (!data || typeof data !== "object") {
+      return reply.status(400).send({ error: "Invalid JSON payload" });
+    }
+
+    const { address } = request.headers as { address?: string };
+    let { userAddress, add } = data as {
+      userAddress: string;
+      add: boolean;
+    };
+
+    userAddress = userAddress.toLowerCase();
+    if (!ethers.isAddress(userAddress)) throw new Error("Invalid address");
+
+    if (add) {
+      await request.server.mongo.db?.collection("followers").updateOne(
+        { address, userAddress },
+        {
+          address,
+          userAddress,
+        },
+        { upsert: true },
+      );
+    } else {
+      await request.server.mongo.db
+        ?.collection("followers")
+        .deleteOne({ address, userAddress });
+    }
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
+  }
+  return reply.send({});
+}
+
+async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    const { userAddress } = request.query as {
+      userAddress?: string;
+    };
+    const followers = await request.server.mongo.db
+      ?.collection("followers")
+      .find({ userAddress }, { projection: { _id: 0 } })
+      .toArray();
+    return reply.send(followers);
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
+  }
+}
 startServer();
