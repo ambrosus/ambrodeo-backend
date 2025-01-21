@@ -68,7 +68,6 @@ const startServer = async () => {
         };
         address = address.toLowerCase();
         const secret = mapSecret.get(address);
-
         if (!signature || !address || !secret) {
           return reply.status(400).send({
             error: "Missing address or signature in headers",
@@ -132,9 +131,11 @@ async function checkTokenExist(
       await request.server.mongo.db?.collection("token").updateOne(
         { tokenAddress },
         {
-          tokenAddress,
-          like: 0,
-          timestamp: new Date(),
+          $set: {
+            tokenAddress,
+            like: 0,
+            timestamp: new Date(),
+          },
         },
         { upsert: true },
       );
@@ -202,10 +203,12 @@ async function addOrUpdateUser(request: FastifyRequest, reply: FastifyReply) {
     await request.server.mongo.db?.collection("user").updateOne(
       { address },
       {
-        address,
-        userName,
-        image,
-        timestamp: new Date(),
+        $set: {
+          address,
+          userName,
+          image,
+          timestamp: new Date(),
+        },
       },
       { upsert: true },
     );
@@ -244,9 +247,11 @@ async function addOrDeleteLike(request: FastifyRequest, reply: FastifyReply) {
         .updateOne(
           { address, tokenAddress },
           {
-            address,
-            tokenAddress,
-            timestamp: new Date(),
+            $set: {
+              address,
+              tokenAddress,
+              timestamp: new Date(),
+            },
           },
           { upsert: true },
         );
@@ -274,7 +279,7 @@ async function addOrDeleteLike(request: FastifyRequest, reply: FastifyReply) {
 
 async function getUser(request: FastifyRequest, reply: FastifyReply) {
   try {
-    let { address } = request.headers as { address?: string };
+    let { address } = request.query as { address?: string };
     address = address.toLowerCase();
     const user = await request.server.mongo.db
       ?.collection("user")
@@ -458,8 +463,10 @@ async function addfollow(request: FastifyRequest, reply: FastifyReply) {
       await request.server.mongo.db?.collection("followers").updateOne(
         { address, userAddress },
         {
-          address,
-          userAddress,
+          $set: {
+            address,
+            userAddress,
+          },
         },
         { upsert: true },
       );

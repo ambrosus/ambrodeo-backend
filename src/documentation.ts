@@ -116,7 +116,11 @@ paths:
     get:
       summary: Get user by address
       parameters:
-        - $ref: '#/components/parameters/GlobalAddressHeader'
+      - name: address
+        in: query
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: User data
@@ -469,7 +473,7 @@ paths:
       description: Retrieve the list of followed.
       parameters:
         - name: address
-          in: query 
+          in: query
           required: true
           description: The address of the user whose followers are being retrieved.
           schema:
