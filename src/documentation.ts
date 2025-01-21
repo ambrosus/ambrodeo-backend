@@ -156,6 +156,8 @@ paths:
                   type: string
                 message:
                   type: string
+                id:
+                  type: string
       responses:
         "200":
           description: Message added successfully
@@ -298,6 +300,8 @@ paths:
                       type: string
                     message:
                       type: string
+                    id:
+                      type: string
                     timestamp:
                       type: string
                       format: date-time
@@ -310,6 +314,105 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/messagesbyuser:
+    get:
+      summary: Get messages for a specific user
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    address:
+                      type: string
+                    tokenAddress:
+                      type: string
+                    message:
+                      type: string
+                    id:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/messagereplies:
+    get:
+      summary: Get replies for a specific message
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    address:
+                      type: string
+                    tokenAddress:
+                      type: string
+                    message:
+                      type: string
+                    id:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
   /api/followers:
     get:
       summary: Get followers

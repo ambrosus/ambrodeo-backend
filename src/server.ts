@@ -96,6 +96,8 @@ const startServer = async () => {
     fastify.get("/api/likes", getUserLikes);
     fastify.get("/api/secret", getSecret);
     fastify.get("/api/followers", getFollowers);
+    fastify.get("/api/messagesbyuser", getMessagesByUser);
+    fastify.get("/api/messagereplies", getMessageReplies);
 
     await fastify.listen({ host: HOST, port: PORT });
     console.log(`Server running on http://${HOST}:${PORT}`);
@@ -155,9 +157,10 @@ async function addMessage(request: FastifyRequest, reply: FastifyReply) {
     }
 
     let { address } = request.headers as { address?: string };
-    let { tokenAddress, message } = data as {
+    let { tokenAddress, message, id } = data as {
       tokenAddress: string;
       message: string;
+      id: string;
     };
 
     address = address.toLowerCase();
@@ -170,6 +173,7 @@ async function addMessage(request: FastifyRequest, reply: FastifyReply) {
       address,
       tokenAddress,
       message: message,
+      id,
       timestamp: new Date(),
     });
   } catch (error) {
@@ -291,7 +295,50 @@ async function getMessages(request: FastifyRequest, reply: FastifyReply) {
     tokenAddress = tokenAddress.toLowerCase();
     const messages = await request.server.mongo.db
       ?.collection("message")
-      .find({ tokenAddress }, { projection: { _id: 0 } })
+      .find({ tokenAddress })
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+    return reply.send(messages);
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
+  }
+}
+
+async function getMessagesByUser(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    let { address, skip, limit } = request.query as {
+      address?: string;
+      skip?: number;
+      limit?: number;
+    };
+    address = address.toLowerCase();
+    const messages = await request.server.mongo.db
+      ?.collection("message")
+      .find({ address })
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+    return reply.send(messages);
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
+  }
+}
+
+async function getMessageReplies(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    let { id, skip, limit } = request.query as {
+      id?: string;
+      skip?: number;
+      limit?: number;
+    };
+    const messages = await request.server.mongo.db
+      ?.collection("message")
+      .find({ id })
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limit)
