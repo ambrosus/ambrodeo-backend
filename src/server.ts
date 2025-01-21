@@ -96,6 +96,7 @@ const startServer = async () => {
     fastify.get("/api/likes", getUserLikes);
     fastify.get("/api/secret", getSecret);
     fastify.get("/api/followers", getFollowers);
+    fastify.get("/api/followed", getFollowed);
     fastify.get("/api/messagesbyuser", getMessagesByUser);
     fastify.get("/api/messagereplies", getMessageReplies);
 
@@ -482,6 +483,22 @@ async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
     const followers = await request.server.mongo.db
       ?.collection("followers")
       .find({ userAddress }, { projection: { _id: 0 } })
+      .toArray();
+    return reply.send(followers);
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
+  }
+}
+
+async function getFollowed(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    const { address } = request.query as {
+      address?: string;
+    };
+    const followers = await request.server.mongo.db
+      ?.collection("followers")
+      .find({ address }, { projection: { _id: 0 } })
       .toArray();
     return reply.send(followers);
   } catch (error) {

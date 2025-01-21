@@ -294,6 +294,8 @@ paths:
                 items:
                   type: object
                   properties:
+                    _id:
+                      type: string
                     address:
                       type: string
                     tokenAddress:
@@ -343,6 +345,8 @@ paths:
                 items:
                   type: object
                   properties:
+                    _id:
+                      type: string
                     address:
                       type: string
                     tokenAddress:
@@ -392,6 +396,8 @@ paths:
                 items:
                   type: object
                   properties:
+                    _id:
+                      type: string
                     address:
                       type: string
                     tokenAddress:
@@ -412,11 +418,10 @@ paths:
                 properties:
                   error:
                     type: string
-
   /api/followers:
     get:
       summary: Get followers
-      description: Retrieve the list of followers for a specific user.
+      description: Retrieve the list of followers.
       parameters:
         - name: userAddress
           in: query
@@ -458,6 +463,52 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/followed:
+    get:
+      summary: Get followers
+      description: Retrieve the list of followed.
+      parameters:
+        - name: address
+          in: query 
+          required: true
+          description: The address of the user whose followers are being retrieved.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully retrieved the list of followers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    address:
+                      type: string
+                      description: The address of the follower.
+                    userAddress:
+                      type: string
+                      description: The address of the user being followed.
+        "400":
+          description: Invalid query parameter or missing required field.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
   /api/token:
     get:
       summary: Get token by address
