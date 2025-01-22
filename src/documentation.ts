@@ -433,6 +433,16 @@ paths:
           description: The address of the user whose followers are being retrieved.
           schema:
             type: string
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         "200":
           description: Successfully retrieved the list of followers.
@@ -478,6 +488,16 @@ paths:
           description: The address of the user whose followers are being retrieved.
           schema:
             type: string
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         "200":
           description: Successfully retrieved the list of followers.

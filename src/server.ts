@@ -75,14 +75,12 @@ const startServer = async () => {
         }
         const recoveredAddress = ethers.verifyMessage(secret, signature);
         if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
-          return reply
-            .status(401)
-            .send({
-              error: "Invalid signature",
-              address: address,
-              signature: signature,
-              secret: secret,
-            });
+          return reply.status(401).send({
+            error: "Invalid signature",
+            address: address,
+            signature: signature,
+            secret: secret,
+          });
         }
       } catch (error) {
         request.log.error(error);
@@ -491,12 +489,17 @@ async function addfollow(request: FastifyRequest, reply: FastifyReply) {
 
 async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const { userAddress } = request.query as {
+    const { userAddress, skip, limit } = request.query as {
       userAddress?: string;
+      skip?: number;
+      limit?: number;
     };
     const followers = await request.server.mongo.db
       ?.collection("followers")
       .find({ userAddress }, { projection: { _id: 0 } })
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
       .toArray();
     return reply.send(followers);
   } catch (error) {
@@ -507,12 +510,17 @@ async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
 
 async function getFollowed(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const { address } = request.query as {
+    const { address, skip, limit } = request.query as {
       address?: string;
+      skip?: number;
+      limit?: number;
     };
     const followers = await request.server.mongo.db
       ?.collection("followers")
       .find({ address }, { projection: { _id: 0 } })
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
       .toArray();
     return reply.send(followers);
   } catch (error) {
