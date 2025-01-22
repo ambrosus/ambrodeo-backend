@@ -75,7 +75,14 @@ const startServer = async () => {
         }
         const recoveredAddress = ethers.verifyMessage(secret, signature);
         if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
-          return reply.status(401).send({ error: "Invalid signature" });
+          return reply
+            .status(401)
+            .send({
+              error: "Invalid signature",
+              address: address,
+              signature: signature,
+              secret: secret,
+            });
         }
       } catch (error) {
         request.log.error(error);
