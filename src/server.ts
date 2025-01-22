@@ -311,7 +311,12 @@ async function getMessages(request: FastifyRequest, reply: FastifyReply) {
       .skip(skip)
       .limit(limit)
       .toArray();
-    return reply.send(messages);
+
+    const total = await request.server.mongo.db
+      ?.collection("message")
+      .countDocuments({ tokenAddress });
+
+    return reply.send({ total: total, data: messages });
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
@@ -333,7 +338,12 @@ async function getMessagesByUser(request: FastifyRequest, reply: FastifyReply) {
       .skip(skip)
       .limit(limit)
       .toArray();
-    return reply.send(messages);
+
+    const total = await request.server.mongo.db
+      ?.collection("message")
+      .countDocuments({ address });
+
+    return reply.send({ total: total, data: messages });
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
@@ -354,7 +364,12 @@ async function getMessageReplies(request: FastifyRequest, reply: FastifyReply) {
       .skip(skip)
       .limit(limit)
       .toArray();
-    return reply.send(messages);
+
+    const total = await request.server.mongo.db
+      ?.collection("message")
+      .countDocuments({ id });
+
+    return reply.send({ total: total, data: messages });
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
@@ -391,7 +406,12 @@ async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
       .skip(skip)
       .limit(limit)
       .toArray();
-    return reply.send(likes);
+
+    const total = await request.server.mongo.db
+      ?.collection("like")
+      .countDocuments({ address });
+
+    return reply.send({ total: total, data: likes });
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
@@ -501,7 +521,12 @@ async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
       .skip(skip)
       .limit(limit)
       .toArray();
-    return reply.send(followers);
+
+    const total = await request.server.mongo.db
+      ?.collection("followers")
+      .countDocuments({ userAddress });
+
+    return reply.send({ total: total, data: followers });
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
@@ -515,14 +540,19 @@ async function getFollowed(request: FastifyRequest, reply: FastifyReply) {
       skip?: number;
       limit?: number;
     };
-    const followers = await request.server.mongo.db
+    const followerd = await request.server.mongo.db
       ?.collection("followers")
       .find({ address }, { projection: { _id: 0 } })
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limit)
       .toArray();
-    return reply.send(followers);
+
+    const total = await request.server.mongo.db
+      ?.collection("followers")
+      .countDocuments({ address });
+
+    return reply.send({ total: total, data: followerd });
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });

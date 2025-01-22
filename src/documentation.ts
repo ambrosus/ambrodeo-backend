@@ -294,23 +294,28 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    _id:
-                      type: string
-                    address:
-                      type: string
-                    tokenAddress:
-                      type: string
-                    message:
-                      type: string
-                    id:
-                      type: string
-                    timestamp:
-                      type: string
-                      format: date-time
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        address:
+                          type: string
+                        tokenAddress:
+                          type: string
+                        message:
+                          type: string
+                        id:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
         "500":
           description: Server error
           content:
@@ -345,23 +350,28 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    _id:
-                      type: string
-                    address:
-                      type: string
-                    tokenAddress:
-                      type: string
-                    message:
-                      type: string
-                    id:
-                      type: string
-                    timestamp:
-                      type: string
-                      format: date-time
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        address:
+                          type: string
+                        tokenAddress:
+                          type: string
+                        message:
+                          type: string
+                        id:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
         "500":
           description: Server error
           content:
@@ -396,23 +406,28 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    _id:
-                      type: string
-                    address:
-                      type: string
-                    tokenAddress:
-                      type: string
-                    message:
-                      type: string
-                    id:
-                      type: string
-                    timestamp:
-                      type: string
-                      format: date-time
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        address:
+                          type: string
+                        tokenAddress:
+                          type: string
+                        message:
+                          type: string
+                        id:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
         "500":
           description: Server error
           content:
@@ -449,16 +464,21 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    address:
-                      type: string
-                      description: The address of the follower.
-                    userAddress:
-                      type: string
-                      description: The address of the user being followed.
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                          description: The address of the follower.
+                        userAddress:
+                          type: string
+                          description: The address of the user being followed.
         "400":
           description: Invalid query parameter or missing required field.
           content:
@@ -504,16 +524,21 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    address:
-                      type: string
-                      description: The address of the follower.
-                    userAddress:
-                      type: string
-                      description: The address of the user being followed.
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                          description: The address of the follower.
+                        userAddress:
+                          type: string
+                          description: The address of the user being followed.
         "400":
           description: Invalid query parameter or missing required field.
           content:
@@ -587,17 +612,22 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    address:
-                      type: string
-                    tokenAddress:
-                      type: string
-                    timestamp:
-                      type: string
-                      format: date-time
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        tokenAddress:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
         "500":
           description: Server error
           content:
