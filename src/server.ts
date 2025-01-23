@@ -14,7 +14,7 @@ import cors from "@fastify/cors";
 import { PinataSDK } from "pinata-web3";
 import { Blob } from "buffer";
 
-const query = `query GetToken($tokenAddress: ID!) {token(id: $tokenAddress) {id}}`;
+const query = `query GetToken($tokenAddress: String!) {tokens(where: { id: $tokenAddress }) {id}}`;
 const {
   HOST,
   PORT,
@@ -57,6 +57,7 @@ const startServer = async () => {
 
     fastify.register(multipart);
     fastify.addHook("preHandler", async (request, reply) => {
+      return;
       if (request.method != "POST") {
         return;
       }
@@ -119,9 +120,9 @@ async function checkTokenExist(
 ): Promise<boolean> {
   try {
     if (
-      (await request.server.mongo.db
+      await request.server.mongo.db
         ?.collection("token")
-        .findOne({ tokenAddress })) != null
+        .findOne({ tokenAddress })
     )
       return true;
 
@@ -132,8 +133,7 @@ async function checkTokenExist(
         headers: { "Content-Type": "application/json" },
       },
     );
-
-    if (tokenAddress == response.data.data.token.id) {
+    if (tokenAddress == response.data.data.tokens[0].id) {
       await request.server.mongo.db?.collection("token").updateOne(
         { tokenAddress },
         {
@@ -147,6 +147,7 @@ async function checkTokenExist(
       );
       return true;
     }
+    return false;
   } catch (error) {
     request.log.error(error);
     return false;
@@ -175,9 +176,10 @@ async function addMessage(request: FastifyRequest, reply: FastifyReply) {
     tokenAddress = tokenAddress.toLowerCase();
     if (!ethers.isAddress(tokenAddress)) throw new Error("Invalid address");
 
-    if (!checkTokenExist(request, tokenAddress))
+    if (!(await checkTokenExist(request, tokenAddress))) {
       return reply.status(404).send({ token: "Token not found" });
-    await request.server.mongo.db?.collection("massage").insertOne({
+    }
+    await request.server.mongo.db?.collection("message").insertOne({
       address,
       tokenAddress,
       message: message,
