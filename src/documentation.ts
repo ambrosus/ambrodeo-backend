@@ -661,4 +661,45 @@ paths:
                 properties:
                   error:
                     type: string
+
+  /isfollowed:
+    get:
+      summary: Check if a user is following another user
+      description: Checks if a document exists in the "followers" collection where "address" and "userAddress" match the query parameters.
+      parameters:
+        - name: address
+          in: query
+          required: true
+          description: The address of the user following the entity.
+          schema:
+            type: string
+        - name: userAddress
+          in: query
+          required: true
+          description: The address of the entity being followed.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Follower status response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    description: Whether the user is following the specified address.
+                    example: true
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: The error message.
+                    example: "Internal server error"
 `;

@@ -103,6 +103,7 @@ const startServer = async () => {
     fastify.get("/api/followed", getFollowed);
     fastify.get("/api/messagesbyuser", getMessagesByUser);
     fastify.get("/api/messagereplies", getMessageReplies);
+    fastify.get("/api/isfollowed", getIsFollowed);
 
     await fastify.listen({ host: HOST, port: PORT });
     console.log(`Server running on http://${HOST}:${PORT}`);
@@ -394,11 +395,13 @@ async function getToken(request: FastifyRequest, reply: FastifyReply) {
 
 async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const { address } = request.headers as { address?: string };
+    let { address } = request.headers as { address?: string };
     const { skip, limit } = request.query as {
       skip?: number;
       limit?: number;
     };
+
+    address = address.toLowerCase();
     const likes = await request.server.mongo.db
       ?.collection("like")
       .find({ address }, { projection: { _id: 0 } })
@@ -421,8 +424,8 @@ async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
 async function getSecret(request: FastifyRequest, reply: FastifyReply) {
   try {
     let { address } = request.headers as { address?: string };
-    address = address.toLowerCase();
     if (!ethers.isAddress(address)) throw new Error("Invalid address");
+    address = address.toLowerCase();
 
     let secret = "AMBRodeo authorization secret: ";
     secret = secret.concat(
@@ -475,14 +478,15 @@ async function addfollow(request: FastifyRequest, reply: FastifyReply) {
       return reply.status(400).send({ error: "Invalid JSON payload" });
     }
 
-    const { address } = request.headers as { address?: string };
+    let { address } = request.headers as { address?: string };
     let { userAddress, add } = data as {
       userAddress: string;
       add: boolean;
     };
 
-    userAddress = userAddress.toLowerCase();
     if (!ethers.isAddress(userAddress)) throw new Error("Invalid address");
+    address = address.toLowerCase();
+    userAddress = userAddress.toLowerCase();
 
     if (add) {
       await request.server.mongo.db?.collection("followers").updateOne(
@@ -509,11 +513,12 @@ async function addfollow(request: FastifyRequest, reply: FastifyReply) {
 
 async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const { userAddress, skip, limit } = request.query as {
+    let { userAddress, skip, limit } = request.query as {
       userAddress?: string;
       skip?: number;
       limit?: number;
     };
+    userAddress = userAddress.toLowerCase();
     const followers = await request.server.mongo.db
       ?.collection("followers")
       .find({ userAddress }, { projection: { _id: 0 } })
@@ -535,11 +540,13 @@ async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
 
 async function getFollowed(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const { address, skip, limit } = request.query as {
+    let { address, skip, limit } = request.query as {
       address?: string;
       skip?: number;
       limit?: number;
     };
+    address = address.toLowerCase();
+
     const followerd = await request.server.mongo.db
       ?.collection("followers")
       .find({ address }, { projection: { _id: 0 } })
@@ -553,6 +560,28 @@ async function getFollowed(request: FastifyRequest, reply: FastifyReply) {
       .countDocuments({ address });
 
     return reply.send({ total: total, data: followerd });
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
+  }
+}
+
+async function getIsFollowed(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    let { address, userAddress } = request.query as {
+      address?: string;
+      userAddress?: string;
+    };
+    address = address.toLowerCase();
+    userAddress = userAddress.toLowerCase();
+    const followerd = await request.server.mongo.db
+      ?.collection("followers")
+      .findOne({ address, userAddress });
+
+    if (followerd) {
+      return reply.send({ status: true });
+    }
+    return reply.send({ status: false });
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
