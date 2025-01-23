@@ -304,6 +304,9 @@ async function getMessages(request: FastifyRequest, reply: FastifyReply) {
       skip?: number;
       limit?: number;
     };
+
+    skip = +skip;
+    limit = +limit;
     tokenAddress = tokenAddress.toLowerCase();
     const messages = await request.server.mongo.db
       ?.collection("message")
@@ -331,6 +334,8 @@ async function getMessagesByUser(request: FastifyRequest, reply: FastifyReply) {
       skip?: number;
       limit?: number;
     };
+    skip = +skip;
+    limit = +limit;
     address = address.toLowerCase();
     const messages = await request.server.mongo.db
       ?.collection("message")
@@ -358,6 +363,8 @@ async function getMessageReplies(request: FastifyRequest, reply: FastifyReply) {
       skip?: number;
       limit?: number;
     };
+    skip = +skip;
+    limit = +limit;
     const messages = await request.server.mongo.db
       ?.collection("message")
       .find({ id })
@@ -396,11 +403,12 @@ async function getToken(request: FastifyRequest, reply: FastifyReply) {
 async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
   try {
     let { address } = request.headers as { address?: string };
-    const { skip, limit } = request.query as {
+    let { skip, limit } = request.query as {
       skip?: number;
       limit?: number;
     };
-
+    skip = +skip;
+    limit = +limit;
     address = address.toLowerCase();
     const likes = await request.server.mongo.db
       ?.collection("like")
@@ -518,6 +526,8 @@ async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
       skip?: number;
       limit?: number;
     };
+    skip = +skip;
+    limit = +limit;
     userAddress = userAddress.toLowerCase();
     const followers = await request.server.mongo.db
       ?.collection("followers")
@@ -545,6 +555,8 @@ async function getFollowed(request: FastifyRequest, reply: FastifyReply) {
       skip?: number;
       limit?: number;
     };
+    skip = +skip;
+    limit = +limit;
     address = address.toLowerCase();
 
     const followerd = await request.server.mongo.db
