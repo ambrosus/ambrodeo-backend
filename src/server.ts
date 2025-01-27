@@ -57,7 +57,6 @@ const startServer = async () => {
 
     fastify.register(multipart);
     fastify.addHook("preHandler", async (request, reply) => {
-      return;
       if (request.method != "POST") {
         return;
       }
