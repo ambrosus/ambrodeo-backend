@@ -34,9 +34,9 @@ const startServer = async () => {
   try {
     const openApiSpec = yaml.load(docs) as OpenAPIV3.Document;
 
-    fastify.register(cors, {
-      origin: "*",
-    });
+    // fastify.register(cors, {
+    //   origin: "*",
+    // });
 
     fastify.register(swagger, {
       openapi: openApiSpec,
