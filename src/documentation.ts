@@ -269,6 +269,80 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/userlike:
+    post:
+      summary: Add or remove a like for a user
+      parameters:
+        - $ref: '#/components/parameters/GlobalSignatureHeader'
+        - $ref: '#/components/parameters/GlobalAddressHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userAddress:
+                  type: string
+                like:
+                  type: boolean
+      responses:
+        "200":
+          description: Like added or removed successfully
+        "400":
+          description: Invalid JSON payload or missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/messagelike:
+    post:
+      summary: Add or remove a like for a message
+      parameters:
+        - $ref: '#/components/parameters/GlobalSignatureHeader'
+        - $ref: '#/components/parameters/GlobalAddressHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                like:
+                  type: boolean
+      responses:
+        "200":
+          description: Like added or removed successfully
+        "400":
+          description: Invalid JSON payload or missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   /api/messages:
     get:
       summary: Get messages for a specific token
@@ -702,4 +776,5 @@ paths:
                     type: string
                     description: The error message.
                     example: "Internal server error"
+
 `;
