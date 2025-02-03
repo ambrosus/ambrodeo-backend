@@ -362,6 +362,11 @@ paths:
           required: false
           schema:
             type: integer
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         "200":
           description: List of messages

@@ -314,19 +314,21 @@ async function getUser(request: FastifyRequest, reply: FastifyReply) {
 
 async function getMessages(request: FastifyRequest, reply: FastifyReply) {
   try {
-    let { tokenAddress, skip, limit } = request.query as {
+    let { tokenAddress, skip, limit, sort } = request.query as {
       tokenAddress?: string;
       skip?: number;
       limit?: number;
+      sort?: number;
     };
 
     skip = +skip;
     limit = +limit;
+    sort = +sort;
     tokenAddress = tokenAddress.toLowerCase();
     const messages = await request.server.mongo.db
       ?.collection(tables.message)
       .find({ tokenAddress })
-      .sort({ timestamp: -1 })
+      .sort({ timestamp: sort === 1 ? 1 : -1 })
       .skip(skip)
       .limit(limit)
       .toArray();
