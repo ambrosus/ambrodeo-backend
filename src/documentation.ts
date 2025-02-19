@@ -458,6 +458,8 @@ paths:
                         timestamp:
                           type: string
                           format: date-time
+                        liked:
+                          type: boolean
         "500":
           description: Server error
           content:
@@ -519,6 +521,8 @@ paths:
                         timestamp:
                           type: string
                           format: date-time
+                        liked:
+                          type: boolean
         "500":
           description: Server error
           content:
