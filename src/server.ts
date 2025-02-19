@@ -378,6 +378,19 @@ async function getMessagesByUser(request: FastifyRequest, reply: FastifyReply) {
       .limit(limit)
       .toArray();
 
+    if (address) {
+      await Promise.all(
+        messages.map(async (message) => {
+          const messagelike = await request.server.mongo.db
+            ?.collection(tables.messagelike)
+            .findOne({ address, id: message._id.toString() });
+
+          if (messagelike) {
+            message.liked = true;
+          }
+        }),
+      );
+    }
     const total = await request.server.mongo.db
       ?.collection(tables.message)
       .countDocuments({ address });
@@ -391,7 +404,8 @@ async function getMessagesByUser(request: FastifyRequest, reply: FastifyReply) {
 
 async function getMessageReplies(request: FastifyRequest, reply: FastifyReply) {
   try {
-    let { id, skip, limit } = request.query as {
+    let { address, id, skip, limit } = request.query as {
+      address?: string;
       id?: string;
       skip?: number;
       limit?: number;
@@ -406,6 +420,20 @@ async function getMessageReplies(request: FastifyRequest, reply: FastifyReply) {
       .limit(limit)
       .toArray();
 
+    if (address) {
+      address = address.toLowerCase();
+      await Promise.all(
+        messages.map(async (message) => {
+          const messagelike = await request.server.mongo.db
+            ?.collection(tables.messagelike)
+            .findOne({ address, id: message._id.toString() });
+
+          if (messagelike) {
+            message.liked = true;
+          }
+        }),
+      );
+    }
     const total = await request.server.mongo.db
       ?.collection(tables.message)
       .countDocuments({ id });

@@ -471,6 +471,11 @@ paths:
     get:
       summary: Get replies for a specific message
       parameters:
+      - name: address
+        in: query
+        required: false
+        schema:
+          type: string
         - name: id
           in: query
           required: true
