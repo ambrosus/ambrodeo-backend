@@ -349,6 +349,8 @@ async function getMessages(request: FastifyRequest, reply: FastifyReply) {
 
           if (messagelike) {
             message.liked = true;
+          } else {
+            message.liked = false;
           }
         }),
       );
@@ -387,6 +389,8 @@ async function getMessagesByUser(request: FastifyRequest, reply: FastifyReply) {
 
           if (messagelike) {
             message.liked = true;
+          } else {
+            message.liked = false;
           }
         }),
       );
@@ -430,6 +434,8 @@ async function getMessageReplies(request: FastifyRequest, reply: FastifyReply) {
 
           if (messagelike) {
             message.liked = true;
+          } else {
+            message.liked = false;
           }
         }),
       );
