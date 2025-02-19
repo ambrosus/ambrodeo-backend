@@ -347,6 +347,11 @@ paths:
     get:
       summary: Get messages for a specific token
       parameters:
+        - name: address
+          in: query
+          required: false
+          schema:
+            type: string
         - name: tokenAddress
           in: query
           required: true
@@ -395,6 +400,8 @@ paths:
                         timestamp:
                           type: string
                           format: date-time
+                        liked:
+                          type: boolean
         "500":
           description: Server error
           content:
@@ -716,6 +723,52 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/messagelikes:
+    get:
+      summary: Get likes for a message
+      parameters:
+        - $ref: '#/components/parameters/GlobalAddressHeader'
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of likes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        id:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   /api/secret:
     get:
       summary: Get a secret for the user address
@@ -781,5 +834,4 @@ paths:
                     type: string
                     description: The error message.
                     example: "Internal server error"
-
 `;

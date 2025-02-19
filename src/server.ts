@@ -106,11 +106,12 @@ const startServer = async () => {
     fastify.post("/api/like", addOrDeleteLike);
     fastify.post("/api/follow", addfollow);
     fastify.post("/api/userlike", addOrDeleteUsertLike);
-    fastify.post("/api/messagelike", addOrDeleteCommentLike);
+    fastify.post("/api/messagelike", addOrDeleteMessageLike);
     fastify.get("/api/user", getUser);
     fastify.get("/api/messages", getMessages);
     fastify.get("/api/token", getToken);
     fastify.get("/api/likes", getUserLikes);
+    fastify.get("/api/messagelikes", getMessageLikes);
     fastify.get("/api/secret", getSecret);
     fastify.get("/api/followers", getFollowers);
     fastify.get("/api/followed", getFollowed);
@@ -314,7 +315,8 @@ async function getUser(request: FastifyRequest, reply: FastifyReply) {
 
 async function getMessages(request: FastifyRequest, reply: FastifyReply) {
   try {
-    let { tokenAddress, skip, limit, sort } = request.query as {
+    let { address, tokenAddress, skip, limit, sort } = request.query as {
+      address?: string;
       tokenAddress?: string;
       skip?: number;
       limit?: number;
@@ -327,7 +329,7 @@ async function getMessages(request: FastifyRequest, reply: FastifyReply) {
     tokenAddress = tokenAddress.toLowerCase();
     const messages = await request.server.mongo.db
       ?.collection(tables.message)
-      .find({ tokenAddress })
+      .find({ tokenAddress, $or: [{ id: null }, { id: { $exists: false } }] })
       .sort({ timestamp: sort === 1 ? 1 : -1 })
       .skip(skip)
       .limit(limit)
@@ -337,6 +339,20 @@ async function getMessages(request: FastifyRequest, reply: FastifyReply) {
       ?.collection(tables.message)
       .countDocuments({ tokenAddress });
 
+    if (address) {
+      address = address.toLowerCase();
+      await Promise.all(
+        messages.map(async (message) => {
+          const messagelike = await request.server.mongo.db
+            ?.collection(tables.messagelike)
+            .findOne({ address, id: message._id.toString() });
+
+          if (messagelike) {
+            message.liked = true;
+          }
+        }),
+      );
+    }
     return reply.send({ total: total, data: messages });
   } catch (error) {
     request.log.error(error);
@@ -411,6 +427,35 @@ async function getToken(request: FastifyRequest, reply: FastifyReply) {
       ?.collection(tables.token)
       .findOne({ tokenAddress }, { projection: { _id: 0 } });
     return reply.send(token);
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
+  }
+}
+
+async function getMessageLikes(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    let { address } = request.headers as { address?: string };
+    let { skip, limit } = request.query as {
+      skip?: number;
+      limit?: number;
+    };
+    skip = +skip;
+    limit = +limit;
+    address = address.toLowerCase();
+    const likes = await request.server.mongo.db
+      ?.collection(tables.messagelike)
+      .find({ address }, { projection: { _id: 0 } })
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    const total = await request.server.mongo.db
+      ?.collection(tables.messagelike)
+      .countDocuments({ address });
+
+    return reply.send({ total: total, data: likes });
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
@@ -617,7 +662,7 @@ async function getIsFollowed(request: FastifyRequest, reply: FastifyReply) {
   }
 }
 
-async function addOrDeleteCommentLike(
+async function addOrDeleteMessageLike(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
