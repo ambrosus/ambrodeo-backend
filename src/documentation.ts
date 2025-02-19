@@ -478,21 +478,21 @@ paths:
         required: false
         schema:
           type: string
-        - name: id
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: skip
-          in: query
-          required: false
-          schema:
-            type: integer
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
       responses:
         "200":
           description: List of messages
