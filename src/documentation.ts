@@ -686,7 +686,7 @@ paths:
                 properties:
                   error:
                     type: string
-  /api/likes:
+  /api/userlikes:
     get:
       summary: Get likes for a user
       parameters:
@@ -843,4 +843,46 @@ paths:
                     type: string
                     description: The error message.
                     example: "Internal server error"
+
+  /isliked:
+    get:
+      summary: Check if a user is liking another user
+      description: Checks if a document exists in the "likes" collection where "address" and "userAddress" match the query parameters.
+      parameters:
+        - name: address
+          in: query
+          required: true
+          description: The address of the user liking the entity.
+          schema:
+            type: string
+        - name: userAddress
+          in: query
+          required: true
+          description: The address of the entity beingliked.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Like status response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    description: Whether the user isliking the specified address.
+                    example: true
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: The error message.
+                    example: "Internal server error"
+
 `;

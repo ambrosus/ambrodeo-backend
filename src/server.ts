@@ -110,7 +110,7 @@ const startServer = async () => {
     fastify.get("/api/user", getUser);
     fastify.get("/api/messages", getMessages);
     fastify.get("/api/token", getToken);
-    fastify.get("/api/likes", getUserLikes);
+    fastify.get("/api/userlikes", getUserLikes);
     fastify.get("/api/messagelikes", getMessageLikes);
     fastify.get("/api/secret", getSecret);
     fastify.get("/api/followers", getFollowers);
@@ -118,6 +118,7 @@ const startServer = async () => {
     fastify.get("/api/messagesbyuser", getMessagesByUser);
     fastify.get("/api/messagereplies", getMessageReplies);
     fastify.get("/api/isfollowed", getIsFollowed);
+    fastify.get("/api/isliked", getIsLiked);
 
     await fastify.listen({ host: HOST, port: PORT });
     console.log(`Server running on http://${HOST}:${PORT}`);
@@ -507,7 +508,7 @@ async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
     limit = +limit;
     address = address.toLowerCase();
     const likes = await request.server.mongo.db
-      ?.collection(tables.like)
+      ?.collection(tables.userlike)
       .find({ address }, { projection: { _id: 0 } })
       .sort({ timestamp: -1 })
       .skip(skip)
@@ -515,7 +516,7 @@ async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
       .toArray();
 
     const total = await request.server.mongo.db
-      ?.collection(tables.like)
+      ?.collection(tables.userlike)
       .countDocuments({ address });
 
     return reply.send({ total: total, data: likes });
@@ -687,6 +688,28 @@ async function getIsFollowed(request: FastifyRequest, reply: FastifyReply) {
       .findOne({ address, userAddress });
 
     if (followerd) {
+      return reply.send({ status: true });
+    }
+    return reply.send({ status: false });
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
+  }
+}
+
+async function getIsLiked(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    let { address, userAddress } = request.query as {
+      address?: string;
+      userAddress?: string;
+    };
+    address = address.toLowerCase();
+    userAddress = userAddress.toLowerCase();
+    const liked = await request.server.mongo.db
+      ?.collection(tables.userlike)
+      .findOne({ address, userAddress });
+
+    if (liked) {
       return reply.send({ status: true });
     }
     return reply.send({ status: false });
