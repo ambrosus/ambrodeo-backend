@@ -499,8 +499,8 @@ async function getMessageLikes(request: FastifyRequest, reply: FastifyReply) {
 
 async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
   try {
-    let { address } = request.headers as { address?: string };
-    let { skip, limit } = request.query as {
+    let { address, skip, limit } = request.query as {
+      address?: string;
       skip?: number;
       limit?: number;
     };

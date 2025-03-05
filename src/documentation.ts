@@ -690,7 +690,11 @@ paths:
     get:
       summary: Get likes for a user
       parameters:
-        - $ref: '#/components/parameters/GlobalAddressHeader'
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
         - name: skip
           in: query
           required: false
@@ -884,5 +888,4 @@ paths:
                     type: string
                     description: The error message.
                     example: "Internal server error"
-
 `;
