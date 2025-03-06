@@ -509,7 +509,7 @@ async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
     address = address.toLowerCase();
     const likes = await request.server.mongo.db
       ?.collection(tables.userlike)
-      .find({ address }, { projection: { _id: 0 } })
+      .find({ userAddress: address }, { projection: { _id: 0 } })
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limit)
@@ -517,7 +517,7 @@ async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
 
     const total = await request.server.mongo.db
       ?.collection(tables.userlike)
-      .countDocuments({ address });
+      .countDocuments({ userAddress: address });
 
     return reply.send({ total: total, data: likes });
   } catch (error) {
