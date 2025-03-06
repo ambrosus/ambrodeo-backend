@@ -135,6 +135,10 @@ paths:
                     type: string
                   image:
                     type: string
+                  messagesReplies:
+                    type: number
+                  messagesLikes:
+                    type: number
         "500":
           description: Server error
           content:

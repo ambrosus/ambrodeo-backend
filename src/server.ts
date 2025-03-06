@@ -201,6 +201,19 @@ async function addMessage(request: FastifyRequest, reply: FastifyReply) {
       like: 0,
       timestamp: new Date(),
     });
+
+    if (id !== "") {
+      const parentMessage = await request.server.mongo.db
+        ?.collection(tables.message)
+        .findOne({ _id: new ObjectId(id) });
+
+      if (parentMessage) {
+        const user = parentMessage.address;
+        request.server.mongo.db
+          ?.collection(tables.user)
+          .updateOne({ address: user }, { $inc: { messagesReplies: 1 } });
+      }
+    }
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
@@ -217,31 +230,31 @@ async function addOrUpdateUser(request: FastifyRequest, reply: FastifyReply) {
     }
 
     let { address } = request.headers as { address?: string };
-    const { userName, image } = data as {
-      userName: string;
-      image: string;
-    };
+    if (!address) {
+      return reply.status(400).send({ error: "Address header is required" });
+    }
     address = address.toLowerCase();
 
-    await request.server.mongo.db?.collection(tables.user).updateOne(
-      { address },
-      {
-        $set: {
-          address,
-          userName,
-          image,
-          timestamp: new Date(),
-        },
-      },
-      { upsert: true },
-    );
-  } catch (error) {
-    request.log.error(error);
-    return reply
-      .status(500)
+    const updateData: Record<string, any> = {
+      address,
+    };
 
-      .send({ error: error.message });
+    if ("userName" in data) {
+      updateData.userName = (data as { userName: string }).userName;
+    }
+
+    if ("image" in data) {
+      updateData.image = (data as { image: string }).image;
+    }
+
+    await request.server.mongo.db
+      ?.collection(tables.user)
+      .updateOne({ address }, { $set: updateData }, { upsert: true });
+  } catch (error: any) {
+    request.log.error(error);
+    return reply.status(500).send({ error: error.message });
   }
+
   return reply.send({});
 }
 
@@ -755,6 +768,19 @@ async function addOrDeleteMessageLike(
         await request.server.mongo.db
           ?.collection(tables.message)
           .updateOne({ _id: new ObjectId(id) }, { $inc: { like: 1 } });
+
+        if (id !== "") {
+          const parentMessage = await request.server.mongo.db
+            ?.collection(tables.message)
+            .findOne({ _id: new ObjectId(id) });
+
+          if (parentMessage) {
+            const user = parentMessage.address;
+            request.server.mongo.db
+              ?.collection(tables.user)
+              .updateOne({ address: user }, { $inc: { messagesLikes: 1 } });
+          }
+        }
       }
     } else {
       const result = await request.server.mongo.db
@@ -764,6 +790,19 @@ async function addOrDeleteMessageLike(
         await request.server.mongo.db
           ?.collection(tables.message)
           .updateOne({ _id: new ObjectId(id) }, { $inc: { like: -1 } });
+
+        if (id !== "") {
+          const parentMessage = await request.server.mongo.db
+            ?.collection(tables.message)
+            .findOne({ _id: new ObjectId(id) });
+
+          if (parentMessage) {
+            const user = parentMessage.address;
+            request.server.mongo.db
+              ?.collection(tables.user)
+              .updateOne({ address: user }, { $inc: { messagesLikes: -1 } });
+          }
+        }
       }
     }
   } catch (error) {
