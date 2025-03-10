@@ -388,7 +388,7 @@ async function getMessagesByUser(request: FastifyRequest, reply: FastifyReply) {
     address = address.toLowerCase();
     const messages = await request.server.mongo.db
       ?.collection(tables.message)
-      .find({ address })
+      .find({ address, $or: [{ id: null }, { id: { $exists: false } }] })
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limit)
