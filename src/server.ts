@@ -93,6 +93,20 @@ const startServer = async () => {
             secret: secret,
           });
         }
+
+        const user = await request.server.mongo.db
+          ?.collection(tables.user)
+          .findOne({ address }, { projection: { _id: 0 } });
+
+        if (!user) {
+          await request.server.mongo.db
+            ?.collection(tables.user)
+            .updateOne(
+              { address },
+              { $set: { userName: "", image: "" } },
+              { upsert: true },
+            );
+        }
       } catch (error) {
         request.log.error(error);
         return reply.status(400).send({ error: error });
