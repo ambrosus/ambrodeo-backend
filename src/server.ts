@@ -14,6 +14,7 @@ import cors from "@fastify/cors";
 import { PinataSDK } from "pinata-web3";
 import { Blob } from "buffer";
 import { ObjectId } from "mongodb";
+import sharp from "sharp";
 
 const query = `query GetToken($tokenAddress: String!) {tokens(where: { id: $tokenAddress }) {id}}`;
 const {
@@ -586,22 +587,16 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
     }
 
     const fileBuffer = await data.toBuffer();
+    try {
+      await sharp(fileBuffer).metadata();
+    } catch (err) {
+      reply.code(400).send({ error: "Invalid image file" });
+      return;
+    }
     const blob = new Blob([fileBuffer.buffer]);
     const file = new File([blob], data.filename, {
       type: data.mimetype,
     });
-
-    // debug
-    console.log(
-      "Upload File: ",
-      "name ",
-      data.filename,
-      "type ",
-      data.mimetype,
-    );
-    console.log("File info: ", file);
-    await readBlob(blob);
-    //
 
     const upload = await pinata.upload.file(file);
     reply.send({
