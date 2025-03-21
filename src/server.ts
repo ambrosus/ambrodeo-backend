@@ -591,8 +591,18 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
       type: data.mimetype,
     });
 
+    // debug
+    console.log("Upload File ", "name ", data.filename, "type ", data.mimetype);
+    console.log("File info ", file);
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const arrayBuffer = event.target!.result as ArrayBuffer;
+      console.log(new Uint8Array(arrayBuffer));
+    };
+    reader.readAsArrayBuffer(blob);
+    //
+
     const upload = await pinata.upload.file(file);
-    console.log;
     reply.send({
       success: true,
       cid: upload.IpfsHash,
