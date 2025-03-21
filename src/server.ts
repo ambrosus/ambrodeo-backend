@@ -592,14 +592,15 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
     });
 
     // debug
-    console.log("Upload File ", "name ", data.filename, "type ", data.mimetype);
-    console.log("File info ", file);
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      const arrayBuffer = event.target!.result as ArrayBuffer;
-      console.log(new Uint8Array(arrayBuffer));
-    };
-    reader.readAsArrayBuffer(blob);
+    console.log(
+      "Upload File: ",
+      "name ",
+      data.filename,
+      "type ",
+      data.mimetype,
+    );
+    console.log("File info: ", file);
+    await readBlob(blob);
     //
 
     const upload = await pinata.upload.file(file);
@@ -611,6 +612,11 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
   }
+}
+
+async function readBlob(blob: Blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+  console.log("File data: ", new Uint8Array(arrayBuffer));
 }
 
 async function addfollow(request: FastifyRequest, reply: FastifyReply) {
