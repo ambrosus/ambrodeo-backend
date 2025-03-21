@@ -587,8 +587,32 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
     }
 
     const fileBuffer = await data.toBuffer();
+    const isImage = (buffer: Buffer): boolean => {
+      const signatures = {
+        jpeg: [0xff, 0xd8, 0xff],
+        png: [0x89, 0x50, 0x4e, 0x47],
+        gif: [0x47, 0x49, 0x46, 0x38],
+        webp: [0x52, 0x49, 0x46, 0x46],
+      };
+
+      const bytes = [...buffer.slice(0, 4)];
+      return (
+        bytes.slice(0, 3).toString() === signatures.jpeg.toString() ||
+        bytes.slice(0, 4).toString() === signatures.png.toString() ||
+        bytes.slice(0, 3).toString() === signatures.gif.toString() ||
+        bytes.slice(0, 4).toString() === signatures.webp.toString()
+      );
+    };
+
+    if (!isImage(fileBuffer)) {
+      reply
+        .code(400)
+        .send({ error: "File is not a valid image based on signature" });
+      return;
+    }
     try {
-      await sharp(fileBuffer).metadata();
+      const f = await sharp(fileBuffer).metadata();
+      console.log("File: ", f);
     } catch (err) {
       reply.code(400).send({ error: "Invalid image file" });
       return;
