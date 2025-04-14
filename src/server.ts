@@ -15,6 +15,9 @@ import { PinataSDK } from "pinata-web3";
 import { Blob } from "buffer";
 import { ObjectId } from "mongodb";
 import sharp from "sharp";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import path from "node:path";
 
 const query = `query GetToken($tokenAddress: String!) {tokens(where: { id: $tokenAddress }) {id}}`;
 const {
@@ -579,39 +582,89 @@ async function getSecret(request: FastifyRequest, reply: FastifyReply) {
 async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
   try {
     let { address } = request.headers as { address?: string };
-    address = address.toLowerCase();
+    address = address?.toLowerCase();
+
     const data = await request.file();
     if (!data) {
       reply.code(400).send({ error: "No file uploaded" });
       return;
     }
 
-    const fileBuffer = await data.toBuffer();
-
-    try {
-      await sharp(fileBuffer).metadata();
-    } catch (err) {
-      reply.code(400).send({ error: "Invalid image file" });
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (data.file.bytesRead > maxSize) {
+      reply.code(400).send({ error: `File size exceeds maximum limit of ${maxSize / (1024 * 1024)}MB` });
       return;
     }
 
-    const blob = new Blob([fileBuffer], { type: data.mimetype });
-    const file = new File([blob], data.filename, { type: data.mimetype });
+    let fileBuffer: Buffer;
 
-    const upload = await pinata.upload.file(file);
-    reply.send({
-      success: true,
-      cid: upload.IpfsHash,
-    });
+    if (typeof data.file.pipe === 'function') { // Process as stream
+      const chunks: Buffer[] = [];
+
+      return new Promise((resolve, reject) => {
+        data.file.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+        data.file.on('error', (err) => reject(err));
+        data.file.on('end', async () => {
+          try {
+            fileBuffer = Buffer.concat(chunks);
+            await processAndUploadFile();
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        });
+      });
+    } else {
+      // Process as buffer
+      fileBuffer = await data.toBuffer();
+      await processAndUploadFile();
+    }
+
+    async function processAndUploadFile() {
+      try {
+        const metadata = await sharp(fileBuffer).metadata();
+        if (!['jpeg', 'png'].includes(metadata.format)) {
+          reply.code(400).send({ error: "Unsupported image format" });
+          return;
+        }
+      } catch (err) {
+        reply.code(400).send({ error: "Invalid image file" });
+        return;
+      }
+
+      const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${data.filename}`);
+      await fs.promises.writeFile(tempFilePath, fileBuffer);
+
+      try {
+        const readableStreamForFile = fs.createReadStream(tempFilePath);
+        const options = {
+          metadata: {
+            name: data.filename,
+            keyvalues: {
+              address,
+              contentType: data.mimetype
+            }
+          }
+        };
+
+        const upload = await pinata.upload.stream(readableStreamForFile, options);
+
+        reply.send({
+          success: true,
+          cid: upload.IpfsHash,
+        });
+      } finally {
+        try {
+          await fs.promises.unlink(tempFilePath);
+        } catch (cleanupError) {
+          request.log.error(`Failed to cleanup temp file: ${cleanupError.message}`);
+        }
+      }
+    }
   } catch (error) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
   }
-}
-
-async function readBlob(blob: Blob) {
-  const arrayBuffer = await blob.arrayBuffer();
-  console.log("File data: ", new Uint8Array(arrayBuffer));
 }
 
 async function addfollow(request: FastifyRequest, reply: FastifyReply) {
