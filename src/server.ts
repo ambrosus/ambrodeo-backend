@@ -624,7 +624,7 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
       try {
         const metadata = await sharp(fileBuffer).metadata();
         console.log("FORMAT", metadata.format);
-        if (!['jpeg', 'png', 'jpg'].includes(metadata.format)) {
+        if (!['jpeg', 'png', 'jpg', 'webp'].includes(metadata.format)) {
           reply.code(400).send({ error: "Unsupported image format" });
           return;
         }
