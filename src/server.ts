@@ -601,7 +601,7 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
     if (typeof data.file.pipe === 'function') { // Process as stream
       const chunks: Buffer[] = [];
 
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         data.file.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
         data.file.on('error', (err) => reject(err));
         data.file.on('end', async () => {
