@@ -696,9 +696,6 @@ function checkImageModeration(response: SightEngineResponse, threshold: number =
 }
 
 async function moderateImage(fileBuffer: Buffer, apiUser: string, apiSecret: string): Promise<SightEngineResponse> {
-  const FormData = require('form-data');
-  const axios = require('axios');
-
   const formData = new FormData();
   formData.append('media', fileBuffer, { filename: 'image.jpg' });
   formData.append('models', 'nudity-2.1,recreational_drug,medical,text-content,text,qr-content');
@@ -709,6 +706,8 @@ async function moderateImage(fileBuffer: Buffer, apiUser: string, apiSecret: str
     const response = await axios.post('https://api.sightengine.com/1.0/check.json', formData, {
       headers: formData.getHeaders()
     });
+
+    console.log('SightEngine API response:', response.data);
 
     return response.data;
   } catch (error) {

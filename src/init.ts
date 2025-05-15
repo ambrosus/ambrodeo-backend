@@ -31,6 +31,6 @@ export function getEnv(): {
 export function initFastify(): FastifyInstance {
   return Fastify({
     bodyLimit: 10000000,
-    logger: true,
+    logger: false,
   });
 }
