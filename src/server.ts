@@ -1,5 +1,5 @@
 import Fastify, { FastifyReply, FastifyRequest } from "fastify";
-import multipart from "@fastify/multipart";
+import multipart, {MultipartFile} from "@fastify/multipart";
 import mongodb from "@fastify/mongodb";
 import axios from "axios";
 import crypto from "crypto";
@@ -18,6 +18,65 @@ import sharp from "sharp";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import path from "node:path";
+import FormData from 'form-data';
+
+interface SightEngineResponse {
+  status: string;
+  request: {
+    id: string;
+    timestamp: number;
+    operations: number;
+  };
+  nudity: {
+    sexual_activity: number;
+    sexual_display: number;
+    erotica: number;
+    very_suggestive: number;
+    suggestive: number;
+    mildly_suggestive: number;
+    suggestive_classes: Record<string, number>;
+    none: number;
+    context: Record<string, number>;
+  };
+  recreational_drug: {
+    prob: number;
+    classes: Record<string, number>;
+  };
+  medical: {
+    prob: number;
+    classes: Record<string, number>;
+  };
+  text: {
+    profanity: any[];
+    personal: any[];
+    link: any[];
+    social: any[];
+    extremism: any[];
+    medical: any[];
+    drug: any[];
+    weapon: any[];
+    "content-trade": any[];
+    "money-transaction": any[];
+    spam: any[];
+    violence: any[];
+    "self-harm": any[];
+    ignored_text: boolean;
+    has_artificial: number;
+    has_natural: number;
+  };
+  qr: {
+    personal: any[];
+    link: any[];
+    social: any[];
+    spam: any[];
+    profanity: any[];
+    blacklist: any[];
+  };
+  media: {
+    id: string;
+    uri: string;
+  };
+}
 
 const query = `query GetToken($tokenAddress: String!) {tokens(where: { id: $tokenAddress }) {id}}`;
 const {
@@ -579,6 +638,85 @@ async function getSecret(request: FastifyRequest, reply: FastifyReply) {
   }
 }
 
+function checkImageModeration(response: SightEngineResponse, threshold: number = 0.6): { isAllowed: boolean; reason?: string } {
+  const nudityCategories = [
+    "sexual_activity", "sexual_display", "erotica",
+    "very_suggestive", "suggestive", "mildly_suggestive"
+  ];
+
+  for (const category of nudityCategories) {
+    if (response.nudity[category] >= threshold) {
+      return { isAllowed: false, reason: `Inappropriate content detected: ${category} (${(response.nudity[category] * 100).toFixed(1)}%)` };
+    }
+  }
+
+  const suggestiveClasses = response.nudity.suggestive_classes;
+  for (const [className, probability] of Object.entries(suggestiveClasses)) {
+    if (typeof probability === 'number' && probability >= threshold) {
+      return { isAllowed: false, reason: `Inappropriate suggestive content: ${className} (${(probability * 100).toFixed(1)}%)` };
+    }
+  }
+
+  if (response.recreational_drug.prob >= threshold) {
+    return { isAllowed: false, reason: `Prohibited substance detected (${(response.recreational_drug.prob * 100).toFixed(1)}%)` };
+  }
+
+  if (response.medical.prob >= threshold) {
+    return { isAllowed: false, reason: `Medical content detected (${(response.medical.prob * 100).toFixed(1)}%)` };
+  }
+
+  const textCategories = [
+    'profanity', 'personal', 'extremism', 'drug',
+    'weapon', 'content-trade', 'money-transaction',
+    'spam', 'violence', 'self-harm'
+  ];
+
+  for (const category of textCategories) {
+    if (Array.isArray(response.text[category]) && response.text[category].length > 0) {
+      return { isAllowed: false, reason: `Prohibited text content detected: ${category}` };
+    }
+  }
+
+  const qrCategories = ['personal', 'spam', 'profanity', 'blacklist'];
+  for (const category of qrCategories) {
+    if (Array.isArray(response.qr[category]) && response.qr[category].length > 0) {
+      return { isAllowed: false, reason: `Prohibited QR content detected: ${category}` };
+    }
+  }
+
+  if (Array.isArray(response.text.link) && response.text.link.length > 0) {
+    console.log('Text contains links:', response.text.link);
+  }
+
+  if (Array.isArray(response.qr.link) && response.qr.link.length > 0) {
+    console.log('QR contains links:', response.qr.link);
+  }
+
+  return { isAllowed: true };
+}
+
+async function moderateImage(fileBuffer: Buffer, apiUser: string, apiSecret: string): Promise<SightEngineResponse> {
+  const FormData = require('form-data');
+  const axios = require('axios');
+
+  const formData = new FormData();
+  formData.append('media', fileBuffer, { filename: 'image.jpg' });
+  formData.append('models', 'nudity-2.1,recreational_drug,medical,text-content,text,qr-content');
+  formData.append('api_user', apiUser);
+  formData.append('api_secret', apiSecret);
+
+  try {
+    const response = await axios.post('https://api.sightengine.com/1.0/check.json', formData, {
+      headers: formData.getHeaders()
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('SightEngine API error:', error.response?.data || error.message);
+    throw new Error('Error during image moderation');
+  }
+}
+
 async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
   try {
     let { address } = request.headers as { address?: string };
@@ -607,7 +745,7 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
         data.file.on('end', async () => {
           try {
             fileBuffer = Buffer.concat(chunks);
-            await processAndUploadFile();
+            await processAndUploadFileWithModeration(fileBuffer, data, address);
             resolve();
           } catch (err) {
             reject(err);
@@ -615,12 +753,16 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
         });
       });
     } else {
-      // Process as buffer
       fileBuffer = await data.toBuffer();
-      await processAndUploadFile();
+      await processAndUploadFileWithModeration(fileBuffer, data, address);
     }
+  } catch (error) {
+    console.error('File upload error:', error);
+    reply.code(500).send({ error: "Error uploading file", details: error.message });
+  }
 
-    async function processAndUploadFile() {
+  async function processAndUploadFileWithModeration(fileBuffer: Buffer, data: MultipartFile, address: string): Promise<void> {
+    try {
       try {
         const metadata = await sharp(fileBuffer).metadata();
         console.log("FORMAT", metadata.format);
@@ -633,38 +775,73 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
         return;
       }
 
-      const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${data.filename}`);
-      await fs.promises.writeFile(tempFilePath, fileBuffer);
 
-      try {
-        const readableStreamForFile = fs.createReadStream(tempFilePath);
-        const options = {
-          metadata: {
-            name: data.filename,
-            keyvalues: {
-              address,
-              contentType: data.mimetype
-            }
-          }
-        };
+      const apiUser = process.env.SIGHTENGINE_API_USER;
+      const apiSecret = process.env.SIGHTENGINE_API_SECRET;
 
-        const upload = await pinata.upload.stream(readableStreamForFile, options);
+      if (!apiUser || !apiSecret) {
+        throw new Error('SightEngine API credentials not configured');
+      }
 
-        reply.send({
-          success: true,
-          cid: upload.IpfsHash,
+      console.log('Starting image moderation...');
+
+      const moderationResult = await moderateImage(fileBuffer, apiUser, apiSecret);
+
+      console.log('Moderation result received:', JSON.stringify(moderationResult, null, 2));
+
+      const moderationCheck = checkImageModeration(moderationResult, 0.6);
+
+      if (!moderationCheck.isAllowed) {
+        console.log('Content moderation failed:', moderationCheck.reason);
+        reply.code(403).send({
+          error: "Content moderation failed",
+          reason: moderationCheck.reason,
+          details: moderationResult
         });
-      } finally {
+        return;
+      }
+
+      console.log('Content moderation passed');
+
+      async function processAndUploadFile() {
+        const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${data.filename}`);
+        await fs.promises.writeFile(tempFilePath, fileBuffer);
+
         try {
-          await fs.promises.unlink(tempFilePath);
-        } catch (cleanupError) {
-          request.log.error(`Failed to cleanup temp file: ${cleanupError.message}`);
+          const readableStreamForFile = fs.createReadStream(tempFilePath);
+          const options = {
+            metadata: {
+              name: data.filename,
+              keyvalues: {
+                address,
+                contentType: data.mimetype
+              }
+            }
+          };
+
+          const upload = await pinata.upload.stream(readableStreamForFile, options);
+
+          reply.send({
+            success: true,
+            cid: upload.IpfsHash,
+          });
+        } finally {
+          try {
+            await fs.promises.unlink(tempFilePath);
+          } catch (cleanupError) {
+            request.log.error(`Failed to cleanup temp file: ${cleanupError.message}`);
+          }
         }
       }
+
+      reply.code(200).send({ message: "File uploaded successfully" });
+    } catch (error) {
+      console.error('Moderation or processing error:', error);
+      reply.code(500).send({
+        error: "Error processing file",
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
-  } catch (error) {
-    request.log.error(error);
-    return reply.status(500).send({ error: error.message });
   }
 }
 
