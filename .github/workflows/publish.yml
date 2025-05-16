@@ -27,7 +27,7 @@ jobs:
       - uses: docker/metadata-action@v3
         id: meta
         with:
-          images: ghcr.io/ambrosus/ambrodeo-backend
+          images: ghcr.io/ascendia-network/ambrodeo-backend
 
       - name: Build and push
         uses: docker/build-push-action@v2
