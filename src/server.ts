@@ -158,17 +158,17 @@ const startServer = async () => {
         }
 
         const user = await request.server.mongo.db
-          ?.collection(tables.user)
-          .findOne({ address }, { projection: { _id: 0 } });
+            ?.collection(tables.user)
+            .findOne({ address }, { projection: { _id: 0 } });
 
         if (!user) {
           await request.server.mongo.db
-            ?.collection(tables.user)
-            .updateOne(
-              { address },
-              { $set: { userName: "", image: "" } },
-              { upsert: true },
-            );
+              ?.collection(tables.user)
+              .updateOne(
+                  { address },
+                  { $set: { userName: "", image: "" } },
+                  { upsert: true },
+              );
         }
       } catch (error) {
         request.log.error(error);
@@ -206,35 +206,35 @@ const startServer = async () => {
 };
 
 async function checkTokenExist(
-  request: FastifyRequest,
-  tokenAddress: string,
+    request: FastifyRequest,
+    tokenAddress: string,
 ): Promise<boolean> {
   try {
     if (
-      await request.server.mongo.db
-        ?.collection(tables.token)
-        .findOne({ tokenAddress })
+        await request.server.mongo.db
+            ?.collection(tables.token)
+            .findOne({ tokenAddress })
     )
       return true;
 
     const response = await axios.post(
-      SUBGRAPHS_ENDPOINT,
-      { query, variables: { tokenAddress } },
-      {
-        headers: { "Content-Type": "application/json" },
-      },
+        SUBGRAPHS_ENDPOINT,
+        { query, variables: { tokenAddress } },
+        {
+          headers: { "Content-Type": "application/json" },
+        },
     );
     if (tokenAddress == response.data.data.tokens[0].id) {
       await request.server.mongo.db?.collection(tables.token).updateOne(
-        { tokenAddress },
-        {
-          $set: {
-            tokenAddress,
-            like: 0,
-            timestamp: new Date(),
+          { tokenAddress },
+          {
+            $set: {
+              tokenAddress,
+              like: 0,
+              timestamp: new Date(),
+            },
           },
-        },
-        { upsert: true },
+          { upsert: true },
       );
       return true;
     }
@@ -281,14 +281,14 @@ async function addMessage(request: FastifyRequest, reply: FastifyReply) {
 
     if (id !== "") {
       const parentMessage = await request.server.mongo.db
-        ?.collection(tables.message)
-        .findOne({ _id: new ObjectId(id) });
+          ?.collection(tables.message)
+          .findOne({ _id: new ObjectId(id) });
 
       if (parentMessage) {
         const user = parentMessage.address;
         request.server.mongo.db
-          ?.collection(tables.user)
-          .updateOne({ address: user }, { $inc: { messagesReplies: 1 } });
+            ?.collection(tables.user)
+            .updateOne({ address: user }, { $inc: { messagesReplies: 1 } });
       }
     }
   } catch (error) {
@@ -325,8 +325,8 @@ async function addOrUpdateUser(request: FastifyRequest, reply: FastifyReply) {
     }
 
     await request.server.mongo.db
-      ?.collection(tables.user)
-      .updateOne({ address }, { $set: updateData }, { upsert: true });
+        ?.collection(tables.user)
+        .updateOne({ address }, { $set: updateData }, { upsert: true });
   } catch (error: any) {
     request.log.error(error);
     return reply.status(500).send({ error: error.message });
@@ -356,31 +356,31 @@ async function addOrDeleteLike(request: FastifyRequest, reply: FastifyReply) {
       return reply.status(404).send({ token: "Token not found" });
     if (like) {
       const result = await request.server.mongo.db
-        ?.collection(tables.like)
-        .updateOne(
-          { address, tokenAddress },
-          {
-            $set: {
-              address,
-              tokenAddress,
-              timestamp: new Date(),
-            },
-          },
-          { upsert: true },
-        );
+          ?.collection(tables.like)
+          .updateOne(
+              { address, tokenAddress },
+              {
+                $set: {
+                  address,
+                  tokenAddress,
+                  timestamp: new Date(),
+                },
+              },
+              { upsert: true },
+          );
       if (result.upsertedCount == 1) {
         await request.server.mongo.db
-          ?.collection(tables.token)
-          .updateOne({ tokenAddress }, { $inc: { like: 1 } });
+            ?.collection(tables.token)
+            .updateOne({ tokenAddress }, { $inc: { like: 1 } });
       }
     } else {
       const result = await request.server.mongo.db
-        ?.collection(tables.like)
-        .deleteOne({ address, tokenAddress });
+          ?.collection(tables.like)
+          .deleteOne({ address, tokenAddress });
       if (result.deletedCount == 1) {
         await request.server.mongo.db
-          ?.collection(tables.token)
-          .updateOne({ tokenAddress }, { $inc: { like: -1 } });
+            ?.collection(tables.token)
+            .updateOne({ tokenAddress }, { $inc: { like: -1 } });
       }
     }
   } catch (error) {
@@ -395,8 +395,8 @@ async function getUser(request: FastifyRequest, reply: FastifyReply) {
     let { address } = request.query as { address?: string };
     address = address.toLowerCase();
     const user = await request.server.mongo.db
-      ?.collection(tables.user)
-      .findOne({ address }, { projection: { _id: 0 } });
+        ?.collection(tables.user)
+        .findOne({ address }, { projection: { _id: 0 } });
     return reply.send(user);
   } catch (error) {
     request.log.error(error);
@@ -419,31 +419,31 @@ async function getMessages(request: FastifyRequest, reply: FastifyReply) {
     sort = +sort;
     tokenAddress = tokenAddress.toLowerCase();
     const messages = await request.server.mongo.db
-      ?.collection(tables.message)
-      .find({ tokenAddress, $or: [{ id: null }, { id: { $exists: false } }] })
-      .sort({ timestamp: sort === 1 ? 1 : -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+        ?.collection(tables.message)
+        .find({ tokenAddress, $or: [{ id: null }, { id: { $exists: false } }] })
+        .sort({ timestamp: sort === 1 ? 1 : -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
     const total = await request.server.mongo.db
-      ?.collection(tables.message)
-      .countDocuments({ tokenAddress });
+        ?.collection(tables.message)
+        .countDocuments({ tokenAddress });
 
     if (address) {
       address = address.toLowerCase();
       await Promise.all(
-        messages.map(async (message) => {
-          const messagelike = await request.server.mongo.db
-            ?.collection(tables.messagelike)
-            .findOne({ address, id: message._id.toString() });
+          messages.map(async (message) => {
+            const messagelike = await request.server.mongo.db
+                ?.collection(tables.messagelike)
+                .findOne({ address, id: message._id.toString() });
 
-          if (messagelike) {
-            message.liked = true;
-          } else {
-            message.liked = false;
-          }
-        }),
+            if (messagelike) {
+              message.liked = true;
+            } else {
+              message.liked = false;
+            }
+          }),
       );
     }
     return reply.send({ total: total, data: messages });
@@ -464,31 +464,31 @@ async function getMessagesByUser(request: FastifyRequest, reply: FastifyReply) {
     limit = +limit;
     address = address.toLowerCase();
     const messages = await request.server.mongo.db
-      ?.collection(tables.message)
-      .find({ address, $or: [{ id: null }, { id: { $exists: false } }] })
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+        ?.collection(tables.message)
+        .find({ address, $or: [{ id: null }, { id: { $exists: false } }] })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
     if (address) {
       await Promise.all(
-        messages.map(async (message) => {
-          const messagelike = await request.server.mongo.db
-            ?.collection(tables.messagelike)
-            .findOne({ address, id: message._id.toString() });
+          messages.map(async (message) => {
+            const messagelike = await request.server.mongo.db
+                ?.collection(tables.messagelike)
+                .findOne({ address, id: message._id.toString() });
 
-          if (messagelike) {
-            message.liked = true;
-          } else {
-            message.liked = false;
-          }
-        }),
+            if (messagelike) {
+              message.liked = true;
+            } else {
+              message.liked = false;
+            }
+          }),
       );
     }
     const total = await request.server.mongo.db
-      ?.collection(tables.message)
-      .countDocuments({ address });
+        ?.collection(tables.message)
+        .countDocuments({ address });
 
     return reply.send({ total: total, data: messages });
   } catch (error) {
@@ -508,32 +508,32 @@ async function getMessageReplies(request: FastifyRequest, reply: FastifyReply) {
     skip = +skip;
     limit = +limit;
     const messages = await request.server.mongo.db
-      ?.collection(tables.message)
-      .find({ id })
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+        ?.collection(tables.message)
+        .find({ id })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
     if (address) {
       address = address.toLowerCase();
       await Promise.all(
-        messages.map(async (message) => {
-          const messagelike = await request.server.mongo.db
-            ?.collection(tables.messagelike)
-            .findOne({ address, id: message._id.toString() });
+          messages.map(async (message) => {
+            const messagelike = await request.server.mongo.db
+                ?.collection(tables.messagelike)
+                .findOne({ address, id: message._id.toString() });
 
-          if (messagelike) {
-            message.liked = true;
-          } else {
-            message.liked = false;
-          }
-        }),
+            if (messagelike) {
+              message.liked = true;
+            } else {
+              message.liked = false;
+            }
+          }),
       );
     }
     const total = await request.server.mongo.db
-      ?.collection(tables.message)
-      .countDocuments({ id });
+        ?.collection(tables.message)
+        .countDocuments({ id });
 
     return reply.send({ total: total, data: messages });
   } catch (error) {
@@ -549,8 +549,8 @@ async function getToken(request: FastifyRequest, reply: FastifyReply) {
     };
     tokenAddress = tokenAddress.toLowerCase();
     const token = await request.server.mongo.db
-      ?.collection(tables.token)
-      .findOne({ tokenAddress }, { projection: { _id: 0 } });
+        ?.collection(tables.token)
+        .findOne({ tokenAddress }, { projection: { _id: 0 } });
     return reply.send(token);
   } catch (error) {
     request.log.error(error);
@@ -569,16 +569,16 @@ async function getMessageLikes(request: FastifyRequest, reply: FastifyReply) {
     limit = +limit;
     address = address.toLowerCase();
     const likes = await request.server.mongo.db
-      ?.collection(tables.messagelike)
-      .find({ address }, { projection: { _id: 0 } })
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+        ?.collection(tables.messagelike)
+        .find({ address }, { projection: { _id: 0 } })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
     const total = await request.server.mongo.db
-      ?.collection(tables.messagelike)
-      .countDocuments({ address });
+        ?.collection(tables.messagelike)
+        .countDocuments({ address });
 
     return reply.send({ total: total, data: likes });
   } catch (error) {
@@ -598,16 +598,16 @@ async function getUserLikes(request: FastifyRequest, reply: FastifyReply) {
     limit = +limit;
     address = address.toLowerCase();
     const likes = await request.server.mongo.db
-      ?.collection(tables.userlike)
-      .find({ userAddress: address }, { projection: { _id: 0 } })
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+        ?.collection(tables.userlike)
+        .find({ userAddress: address }, { projection: { _id: 0 } })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
     const total = await request.server.mongo.db
-      ?.collection(tables.userlike)
-      .countDocuments({ userAddress: address });
+        ?.collection(tables.userlike)
+        .countDocuments({ userAddress: address });
 
     return reply.send({ total: total, data: likes });
   } catch (error) {
@@ -624,10 +624,10 @@ async function getSecret(request: FastifyRequest, reply: FastifyReply) {
 
     let secret = "AMBRodeo authorization secret: ";
     secret = secret.concat(
-      crypto
-        .createHash("sha256")
-        .update(crypto.getRandomValues(new Uint8Array(32)))
-        .digest("hex"),
+        crypto
+            .createHash("sha256")
+            .update(crypto.getRandomValues(new Uint8Array(32)))
+            .digest("hex"),
     );
 
     mapSecret.set(address, secret);
@@ -834,7 +834,6 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
       }
 
       await processAndUploadFile();
-      reply.code(200).send({ message: "File uploaded successfully" });
     } catch (error) {
       console.error('Moderation or processing error:', error);
       reply.code(500).send({
@@ -864,19 +863,19 @@ async function addfollow(request: FastifyRequest, reply: FastifyReply) {
 
     if (add) {
       await request.server.mongo.db?.collection(tables.followers).updateOne(
-        { address, userAddress },
-        {
-          $set: {
-            address,
-            userAddress,
+          { address, userAddress },
+          {
+            $set: {
+              address,
+              userAddress,
+            },
           },
-        },
-        { upsert: true },
+          { upsert: true },
       );
     } else {
       await request.server.mongo.db
-        ?.collection(tables.followers)
-        .deleteOne({ address, userAddress });
+          ?.collection(tables.followers)
+          .deleteOne({ address, userAddress });
     }
   } catch (error) {
     request.log.error(error);
@@ -896,16 +895,16 @@ async function getFollowers(request: FastifyRequest, reply: FastifyReply) {
     limit = +limit;
     userAddress = userAddress.toLowerCase();
     const followers = await request.server.mongo.db
-      ?.collection(tables.followers)
-      .find({ userAddress }, { projection: { _id: 0 } })
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+        ?.collection(tables.followers)
+        .find({ userAddress }, { projection: { _id: 0 } })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
     const total = await request.server.mongo.db
-      ?.collection(tables.followers)
-      .countDocuments({ userAddress });
+        ?.collection(tables.followers)
+        .countDocuments({ userAddress });
 
     return reply.send({ total: total, data: followers });
   } catch (error) {
@@ -926,16 +925,16 @@ async function getFollowed(request: FastifyRequest, reply: FastifyReply) {
     address = address.toLowerCase();
 
     const followerd = await request.server.mongo.db
-      ?.collection(tables.followers)
-      .find({ address }, { projection: { _id: 0 } })
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+        ?.collection(tables.followers)
+        .find({ address }, { projection: { _id: 0 } })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
     const total = await request.server.mongo.db
-      ?.collection(tables.followers)
-      .countDocuments({ address });
+        ?.collection(tables.followers)
+        .countDocuments({ address });
 
     return reply.send({ total: total, data: followerd });
   } catch (error) {
@@ -953,8 +952,8 @@ async function getIsFollowed(request: FastifyRequest, reply: FastifyReply) {
     address = address.toLowerCase();
     userAddress = userAddress.toLowerCase();
     const followerd = await request.server.mongo.db
-      ?.collection(tables.followers)
-      .findOne({ address, userAddress });
+        ?.collection(tables.followers)
+        .findOne({ address, userAddress });
 
     if (followerd) {
       return reply.send({ status: true });
@@ -975,8 +974,8 @@ async function getIsLiked(request: FastifyRequest, reply: FastifyReply) {
     address = address.toLowerCase();
     userAddress = userAddress.toLowerCase();
     const liked = await request.server.mongo.db
-      ?.collection(tables.userlike)
-      .findOne({ address, userAddress });
+        ?.collection(tables.userlike)
+        .findOne({ address, userAddress });
 
     if (liked) {
       return reply.send({ status: true });
@@ -989,8 +988,8 @@ async function getIsLiked(request: FastifyRequest, reply: FastifyReply) {
 }
 
 async function addOrDeleteMessageLike(
-  request: FastifyRequest,
-  reply: FastifyReply,
+    request: FastifyRequest,
+    reply: FastifyReply,
 ) {
   try {
     const data = request.body;
@@ -1008,55 +1007,55 @@ async function addOrDeleteMessageLike(
 
     if (like) {
       const result = await request.server.mongo.db
-        ?.collection(tables.messagelike)
-        .updateOne(
-          { address, id },
-          {
-            $set: {
-              address,
-              id,
-              timestamp: new Date(),
-            },
-          },
-          { upsert: true },
-        );
+          ?.collection(tables.messagelike)
+          .updateOne(
+              { address, id },
+              {
+                $set: {
+                  address,
+                  id,
+                  timestamp: new Date(),
+                },
+              },
+              { upsert: true },
+          );
       if (result.upsertedCount == 1) {
         await request.server.mongo.db
-          ?.collection(tables.message)
-          .updateOne({ _id: new ObjectId(id) }, { $inc: { like: 1 } });
+            ?.collection(tables.message)
+            .updateOne({ _id: new ObjectId(id) }, { $inc: { like: 1 } });
 
         if (id !== "") {
           const parentMessage = await request.server.mongo.db
-            ?.collection(tables.message)
-            .findOne({ _id: new ObjectId(id) });
+              ?.collection(tables.message)
+              .findOne({ _id: new ObjectId(id) });
 
           if (parentMessage) {
             const user = parentMessage.address;
             request.server.mongo.db
-              ?.collection(tables.user)
-              .updateOne({ address: user }, { $inc: { messagesLikes: 1 } });
+                ?.collection(tables.user)
+                .updateOne({ address: user }, { $inc: { messagesLikes: 1 } });
           }
         }
       }
     } else {
       const result = await request.server.mongo.db
-        ?.collection(tables.messagelike)
-        .deleteOne({ address, id });
+          ?.collection(tables.messagelike)
+          .deleteOne({ address, id });
       if (result.deletedCount == 1) {
         await request.server.mongo.db
-          ?.collection(tables.message)
-          .updateOne({ _id: new ObjectId(id) }, { $inc: { like: -1 } });
+            ?.collection(tables.message)
+            .updateOne({ _id: new ObjectId(id) }, { $inc: { like: -1 } });
 
         if (id !== "") {
           const parentMessage = await request.server.mongo.db
-            ?.collection(tables.message)
-            .findOne({ _id: new ObjectId(id) });
+              ?.collection(tables.message)
+              .findOne({ _id: new ObjectId(id) });
 
           if (parentMessage) {
             const user = parentMessage.address;
             request.server.mongo.db
-              ?.collection(tables.user)
-              .updateOne({ address: user }, { $inc: { messagesLikes: -1 } });
+                ?.collection(tables.user)
+                .updateOne({ address: user }, { $inc: { messagesLikes: -1 } });
           }
         }
       }
@@ -1069,8 +1068,8 @@ async function addOrDeleteMessageLike(
 }
 
 async function addOrDeleteUsertLike(
-  request: FastifyRequest,
-  reply: FastifyReply,
+    request: FastifyRequest,
+    reply: FastifyReply,
 ) {
   try {
     const data = request.body;
@@ -1090,31 +1089,31 @@ async function addOrDeleteUsertLike(
 
     if (like) {
       const result = await request.server.mongo.db
-        ?.collection(tables.userlike)
-        .updateOne(
-          { address, userAddress },
-          {
-            $set: {
-              address,
-              userAddress,
-              timestamp: new Date(),
-            },
-          },
-          { upsert: true },
-        );
+          ?.collection(tables.userlike)
+          .updateOne(
+              { address, userAddress },
+              {
+                $set: {
+                  address,
+                  userAddress,
+                  timestamp: new Date(),
+                },
+              },
+              { upsert: true },
+          );
       if (result.upsertedCount == 1) {
         await request.server.mongo.db
-          ?.collection(tables.user)
-          .updateOne({ address: userAddress }, { $inc: { like: 1 } });
+            ?.collection(tables.user)
+            .updateOne({ address: userAddress }, { $inc: { like: 1 } });
       }
     } else {
       const result = await request.server.mongo.db
-        ?.collection(tables.userlike)
-        .deleteOne({ address, userAddress });
+          ?.collection(tables.userlike)
+          .deleteOne({ address, userAddress });
       if (result.deletedCount == 1) {
         await request.server.mongo.db
-          ?.collection(tables.user)
-          .updateOne({ address: userAddress }, { $inc: { like: -1 } });
+            ?.collection(tables.user)
+            .updateOne({ address: userAddress }, { $inc: { like: -1 } });
       }
     }
   } catch (error) {
