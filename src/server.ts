@@ -833,6 +833,7 @@ async function uploadFile(request: FastifyRequest, reply: FastifyReply) {
         }
       }
 
+      await processAndUploadFile();
       reply.code(200).send({ message: "File uploaded successfully" });
     } catch (error) {
       console.error('Moderation or processing error:', error);
