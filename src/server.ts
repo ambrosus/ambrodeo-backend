@@ -641,7 +641,6 @@ async function getSecret(request: FastifyRequest, reply: FastifyReply) {
 function checkImageModeration(response: SightEngineResponse, threshold: number = 0.6): { isAllowed: boolean; reason?: string } {
   const nudityCategories = [
     "sexual_activity", "sexual_display", "erotica",
-    "very_suggestive", "suggestive", "mildly_suggestive"
   ];
 
   for (const category of nudityCategories) {
