@@ -656,40 +656,40 @@ function checkImageModeration(response: SightEngineResponse, threshold: number =
     }
   }
 
-  if (response.recreational_drug.prob >= threshold) {
-    return { isAllowed: false, reason: `Prohibited substance detected (${(response.recreational_drug.prob * 100).toFixed(1)}%)` };
-  }
-
-  if (response.medical.prob >= threshold) {
-    return { isAllowed: false, reason: `Medical content detected (${(response.medical.prob * 100).toFixed(1)}%)` };
-  }
-
-  const textCategories = [
-    'profanity', 'personal', 'extremism', 'drug',
-    'weapon', 'content-trade', 'money-transaction',
-    'spam', 'violence', 'self-harm'
-  ];
-
-  for (const category of textCategories) {
-    if (Array.isArray(response.text[category]) && response.text[category].length > 0) {
-      return { isAllowed: false, reason: `Prohibited text content detected: ${category}` };
-    }
-  }
-
-  const qrCategories = ['personal', 'spam', 'profanity', 'blacklist'];
-  for (const category of qrCategories) {
-    if (Array.isArray(response.qr[category]) && response.qr[category].length > 0) {
-      return { isAllowed: false, reason: `Prohibited QR content detected: ${category}` };
-    }
-  }
-
-  if (Array.isArray(response.text.link) && response.text.link.length > 0) {
-    console.log('Text contains links:', response.text.link);
-  }
-
-  if (Array.isArray(response.qr.link) && response.qr.link.length > 0) {
-    console.log('QR contains links:', response.qr.link);
-  }
+  // if (response.recreational_drug.prob >= threshold) {
+  //   return { isAllowed: false, reason: `Prohibited substance detected (${(response.recreational_drug.prob * 100).toFixed(1)}%)` };
+  // }
+  //
+  // if (response.medical.prob >= threshold) {
+  //   return { isAllowed: false, reason: `Medical content detected (${(response.medical.prob * 100).toFixed(1)}%)` };
+  // }
+  //
+  // const textCategories = [
+  //   'profanity', 'personal', 'extremism', 'drug',
+  //   'weapon', 'content-trade', 'money-transaction',
+  //   'spam', 'violence', 'self-harm'
+  // ];
+  //
+  // for (const category of textCategories) {
+  //   if (Array.isArray(response.text[category]) && response.text[category].length > 0) {
+  //     return { isAllowed: false, reason: `Prohibited text content detected: ${category}` };
+  //   }
+  // }
+  //
+  // const qrCategories = ['personal', 'spam', 'profanity', 'blacklist'];
+  // for (const category of qrCategories) {
+  //   if (Array.isArray(response.qr[category]) && response.qr[category].length > 0) {
+  //     return { isAllowed: false, reason: `Prohibited QR content detected: ${category}` };
+  //   }
+  // }
+  //
+  // if (Array.isArray(response.text.link) && response.text.link.length > 0) {
+  //   console.log('Text contains links:', response.text.link);
+  // }
+  //
+  // if (Array.isArray(response.qr.link) && response.qr.link.length > 0) {
+  //   console.log('QR contains links:', response.qr.link);
+  // }
 
   return { isAllowed: true };
 }
@@ -697,7 +697,7 @@ function checkImageModeration(response: SightEngineResponse, threshold: number =
 async function moderateImage(fileBuffer: Buffer, apiUser: string, apiSecret: string): Promise<SightEngineResponse> {
   const formData = new FormData();
   formData.append('media', fileBuffer, { filename: 'image.jpg' });
-  formData.append('models', 'nudity-2.1,recreational_drug,medical,text-content,text,qr-content');
+  formData.append('models', 'nudity-2.1');
   formData.append('api_user', apiUser);
   formData.append('api_secret', apiSecret);
 
