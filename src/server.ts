@@ -649,12 +649,12 @@ function checkImageModeration(response: SightEngineResponse, threshold: number =
     }
   }
 
-  const suggestiveClasses = response.nudity.suggestive_classes;
-  for (const [className, probability] of Object.entries(suggestiveClasses)) {
-    if (typeof probability === 'number' && probability >= threshold) {
-      return { isAllowed: false, reason: `Inappropriate suggestive content: ${className} (${(probability * 100).toFixed(1)}%)` };
-    }
-  }
+  // const suggestiveClasses = response.nudity.suggestive_classes;
+  // for (const [className, probability] of Object.entries(suggestiveClasses)) {
+  //   if (typeof probability === 'number' && probability >= threshold) {
+  //     return { isAllowed: false, reason: `Inappropriate suggestive content: ${className} (${(probability * 100).toFixed(1)}%)` };
+  //   }
+  // }
 
   // if (response.recreational_drug.prob >= threshold) {
   //   return { isAllowed: false, reason: `Prohibited substance detected (${(response.recreational_drug.prob * 100).toFixed(1)}%)` };
